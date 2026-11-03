@@ -3,8 +3,10 @@
 Scores Ticket to Ride from a phone photo of the board. Runs entirely in the browser; photos never leave the phone.
 
 ## Flow
+The app opens on a main menu with New game, Resume, and a short how-it-works guide. Every step has a Back button.
+
 1. Setup: board (USA or Europe), player names and train colors.
-2. Photo, then tap the 4 outer corners of the board. Drag a corner to adjust; a magnifier shows the exact point.
+2. Photo from any side of the table, then tap the 4 outer corners of the board. The app turns the board the right way up on its own (Turn board button if needed). Drag a corner to adjust; a magnifier shows the exact point.
 3. Tap 2 trains of each player's color (calibrates to your lighting).
 4. Review: every route is colored by owner. Tap a route to change its owner. Enter the trains each player actually has left; if a count doesn't match, the app names the routes most likely to be wrong and outlines them in yellow. It also flags double-route rule breaks (one player on both sides; both sides used in a 2 or 3 player game).
 5. Destination tickets per player (completed add, not completed subtract) and bonuses. USA longest path is worked out from the board automatically (can be overridden).

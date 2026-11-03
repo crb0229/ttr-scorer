@@ -6,22 +6,44 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TTR Scorer">
 <title>TTR Scorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght@600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f4f1ea;--card:#fff;--ink:#222;--mute:#777;--line:#ddd;--accent:#8a2b1c}
-@media (prefers-color-scheme:dark){:root{--bg:#1b1a18;--card:#2a2825;--ink:#eee;--mute:#aaa;--line:#444;--accent:#e07a5f}}
+:root{--loco:#211b15;--bg:#ece0c6;--card:#fbf5e6;--ink:#2b2117;--mute:#6f6151;--line:#d6c4a1;--accent:#1f5a40;--accent2:#9c2f1f;--brass:#c8962e;--rail:#5b4a3a;
+  --track:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg transform='rotate(-30 60 60)' stroke='%235b4a3a' stroke-opacity='.09'%3E%3Cpath d='M-40 52H160M-40 68H160' stroke-width='3'/%3E%3Cpath d='M-30 44v32M-10 44v32M10 44v32M30 44v32M50 44v32M70 44v32M90 44v32M110 44v32M130 44v32M150 44v32' stroke-width='5'/%3E%3C/g%3E%3C/svg%3E")}
+@media (prefers-color-scheme:dark){:root{--loco:#cbbda4;--bg:#17130f;--card:#251e17;--ink:#f0e6d2;--mute:#b3a48c;--line:#4a3d2e;--accent:#3f8f69;--accent2:#d0634f;--brass:#d9a845;--rail:#a08b72;
+  --track:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg transform='rotate(-30 60 60)' stroke='%23f0e6d2' stroke-opacity='.05'%3E%3Cpath d='M-40 52H160M-40 68H160' stroke-width='3'/%3E%3Cpath d='M-30 44v32M-10 44v32M10 44v32M30 44v32M50 44v32M70 44v32M90 44v32M110 44v32M130 44v32M150 44v32' stroke-width='5'/%3E%3C/g%3E%3C/svg%3E")}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,system-ui,sans-serif;padding:12px 12px 80px}
-h1{font-size:22px;margin:4px 0 12px}h2{font-size:18px;margin:0 0 8px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;margin:4px 4px 4px 0}
-button.sec{background:var(--line);color:var(--ink)}
+body{margin:0 auto;max-width:720px;background:var(--bg) var(--track);color:var(--ink);font:16px/1.45 -apple-system,system-ui,sans-serif;padding:12px 12px 80px}
+header{text-align:center;margin:0 0 10px}
+header svg{width:100%;max-width:420px;height:auto;display:block;margin:0 auto}
+h1{font:400 30px/1.1 Rye,Georgia,serif;margin:2px 0 0;color:var(--accent2);letter-spacing:.5px}
+.sub{font:600 12px 'Roboto Slab',Georgia,serif;letter-spacing:3px;text-transform:uppercase;color:var(--mute);margin-top:4px}
+h2{font:700 19px 'Roboto Slab',Georgia,serif;margin:0 0 8px;color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;
+  outline:1.5px dashed var(--line);outline-offset:-7px;box-shadow:0 2px 0 var(--line),0 6px 18px rgba(60,40,20,.12)}
+.card .card{box-shadow:none;outline:none;padding:12px}
+button{font:600 16px/1.2 -apple-system,system-ui,sans-serif;border:0;border-radius:10px;padding:11px 16px;background:var(--accent);color:#fff;margin:4px 4px 4px 0;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.22);cursor:pointer}
+button.sec{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+button.back{background:transparent;color:var(--mute);box-shadow:none;padding-left:4px}
 button:disabled{opacity:.4}
+.nav{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+/* progress shown as stations on a rail line */
+#route{display:flex;justify-content:space-between;position:relative;margin:0 6px 14px;padding-top:4px}
+#route::before{content:'';position:absolute;left:10px;right:10px;top:13px;height:4px;
+  background:repeating-linear-gradient(90deg,var(--rail) 0 3px,transparent 3px 9px);opacity:.5}
+#route div{position:relative;text-align:center;font-size:11px;color:var(--mute);width:16%}
+#route i{display:block;width:18px;height:18px;margin:0 auto 3px;border-radius:50%;background:var(--card);border:3px solid var(--rail)}
+#route .done i{background:var(--accent);border-color:var(--accent)}
+#route .now i{background:var(--brass);border-color:var(--accent2);transform:scale(1.3)}
+#route .now{color:var(--ink);font-weight:600}
 input,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
 .dot{width:18px;height:18px;border-radius:50%;display:inline-block;border:2px solid #fff;box-shadow:0 0 0 1px #888;flex:none}
 .mute{color:var(--mute);font-size:14px}
 canvas{width:100%;display:block;border-radius:8px;touch-action:manipulation}
-.hide{display:none}
+.hide{display:none!important}
 .chip{display:inline-block;padding:4px 10px;border-radius:999px;margin:3px;font-size:14px;cursor:pointer}
 .chip.ok{background:#d8efd8;color:#1d5c1d}.chip.bad{background:#f6d6d2;color:#7a1f14}
 table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}
@@ -31,22 +53,133 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
 </style>
 </head>
 <body>
+<header>
+<svg viewBox="0 0 520 150" role="img" aria-label="1870s American steam locomotive">
+<style>.ink{fill:var(--loco)}.red{fill:var(--accent2)}.brass{fill:var(--brass)}.win{fill:var(--card)}.spk{stroke:var(--accent2);stroke-width:1.6;fill:none}
+.ln{stroke:var(--loco);fill:none}.rail{fill:var(--rail)}.cloud{fill:var(--mute);opacity:.18}
+.puff{fill:var(--mute);animation:drift 5s linear infinite;opacity:0}.p2{animation-delay:1.7s}.p3{animation-delay:3.4s}
+@keyframes drift{0%{transform:translate(0,0) scale(.4);opacity:.35}100%{transform:translate(-150px,-6px) scale(2.2);opacity:0}}
+@media (prefers-reduced-motion:reduce){.puff{animation:none}}</style>
+<path class="cloud" d="M372 18c-14-12-34-8-40 2-12-8-30-2-30 10-14-6-34 0-34 12-12-4-28 2-26 12h70c10 0 20-6 22-14 10 4 26 0 28-10 6-2 10-8 10-12z"/>
+<g transform="translate(378 14)"><circle class="puff" r="10"/><circle class="puff p2" r="10"/><circle class="puff p3" r="10"/></g>
+<path d="M0 141h520v9H0z" fill="var(--rail)" opacity=".25"/>
+<g class="rail"><rect x="2" y="136" width="14" height="6" rx="1"/><rect x="26" y="136" width="14" height="6" rx="1"/><rect x="50" y="136" width="14" height="6" rx="1"/><rect x="74" y="136" width="14" height="6" rx="1"/><rect x="98" y="136" width="14" height="6" rx="1"/><rect x="122" y="136" width="14" height="6" rx="1"/><rect x="146" y="136" width="14" height="6" rx="1"/><rect x="170" y="136" width="14" height="6" rx="1"/><rect x="194" y="136" width="14" height="6" rx="1"/><rect x="218" y="136" width="14" height="6" rx="1"/><rect x="242" y="136" width="14" height="6" rx="1"/><rect x="266" y="136" width="14" height="6" rx="1"/><rect x="290" y="136" width="14" height="6" rx="1"/><rect x="314" y="136" width="14" height="6" rx="1"/><rect x="338" y="136" width="14" height="6" rx="1"/><rect x="362" y="136" width="14" height="6" rx="1"/><rect x="386" y="136" width="14" height="6" rx="1"/><rect x="410" y="136" width="14" height="6" rx="1"/><rect x="434" y="136" width="14" height="6" rx="1"/><rect x="458" y="136" width="14" height="6" rx="1"/><rect x="482" y="136" width="14" height="6" rx="1"/><rect x="506" y="136" width="14" height="6" rx="1"/></g>
+<rect class="rail" x="0" y="131" width="520" height="5"/>
+<path class="ink" d="M22 78h104v40H22z"/>
+<path class="ink" d="M26 78c8-12 22-16 34-12 10-8 26-8 34 0 10-4 24-2 30 12z"/>
+<path class="brass" d="M22 76h104v4H22zM22 111h104v3H22z"/>
+<path class="red" d="M30 86h88v20H30z" opacity=".9"/><path class="ln" stroke-width="1.5" d="M34 90h80v12H34z"/>
+<path class="ink" d="M20 116h110v6H20z"/>
+<circle class="ink" cx="40" cy="124" r="8"/>
+<circle class="red" cx="40" cy="124" r="4.8"/>
+<circle class="ink" cx="40" cy="124" r="3"/>
+<path class="spk" d="M40.0 124.0L43.8 124.0 M40.0 124.0L41.9 127.3 M40.0 124.0L38.1 127.3 M40.0 124.0L36.2 124.0 M40.0 124.0L38.1 120.7 M40.0 124.0L41.9 120.7"/>
+<circle class="red" cx="40" cy="124" r="2.0"/><circle class="ink" cx="40" cy="124" r="0.9"/>
+<circle class="ink" cx="64" cy="124" r="8"/>
+<circle class="red" cx="64" cy="124" r="4.8"/>
+<circle class="ink" cx="64" cy="124" r="3"/>
+<path class="spk" d="M64.0 124.0L67.8 124.0 M64.0 124.0L65.9 127.3 M64.0 124.0L62.1 127.3 M64.0 124.0L60.2 124.0 M64.0 124.0L62.1 120.7 M64.0 124.0L65.9 120.7"/>
+<circle class="red" cx="64" cy="124" r="2.0"/><circle class="ink" cx="64" cy="124" r="0.9"/>
+<circle class="ink" cx="90" cy="124" r="8"/>
+<circle class="red" cx="90" cy="124" r="4.8"/>
+<circle class="ink" cx="90" cy="124" r="3"/>
+<path class="spk" d="M90.0 124.0L93.8 124.0 M90.0 124.0L91.9 127.3 M90.0 124.0L88.1 127.3 M90.0 124.0L86.2 124.0 M90.0 124.0L88.1 120.7 M90.0 124.0L91.9 120.7"/>
+<circle class="red" cx="90" cy="124" r="2.0"/><circle class="ink" cx="90" cy="124" r="0.9"/>
+<circle class="ink" cx="114" cy="124" r="8"/>
+<circle class="red" cx="114" cy="124" r="4.8"/>
+<circle class="ink" cx="114" cy="124" r="3"/>
+<path class="spk" d="M114.0 124.0L117.8 124.0 M114.0 124.0L115.9 127.3 M114.0 124.0L112.1 127.3 M114.0 124.0L110.2 124.0 M114.0 124.0L112.1 120.7 M114.0 124.0L115.9 120.7"/>
+<circle class="red" cx="114" cy="124" r="2.0"/><circle class="ink" cx="114" cy="124" r="0.9"/>
+<path class="ink" d="M128 116h10v4h-10z"/>
+<path class="ink" d="M136 50h62v72h-62z"/>
+<path class="ink" d="M128 46q35-12 78 0v5h-78z"/>
+<path class="brass" d="M128 50h78v2h-78z"/>
+<path class="win" d="M144 60h18v22h-18zM172 60h18v22h-18z"/>
+<path class="ln" stroke-width="1.4" d="M153 60v22M181 60v22"/>
+<path class="red" d="M140 90h54v24h-54z" opacity=".9"/><path class="ln" stroke-width="1.4" d="M144 94h46v16h-46z"/>
+<path class="ink" d="M198 70h170v38H198z"/>
+<path class="brass" d="M224 69h4v40h-4zM262 69h4v40h-4zM300 69h4v40h-4zM338 69h4v40h-4z"/>
+<path class="ink" d="M366 64h28q8 0 8 8v34q0 8-8 8h-28z"/>
+<path class="brass" d="M366 64h4v50h-4z"/>
+<path class="ink" d="M236 70v-8q12-10 24 0v8z"/><path class="brass" d="M234 70h28v3h-28z"/>
+<path class="brass" d="M282 62q0-12 7-12t7 12z"/><path class="ln" stroke-width="2" d="M289 50v-6M280 62h18"/>
+<path class="brass" d="M310 70v-12q13-14 26 0v12z"/><path class="ink" d="M312 58h22v3h-22z"/>
+<path class="brass" d="M206 50h4v20h-4z"/><circle class="brass" cx="208" cy="48" r="3"/>
+<path class="ink" d="M372 64l-2-20h16l-2 20z"/>
+<path class="ink" d="M360 44q18 6 36 0l-6-26h-24z"/><path class="ink" d="M362 18h32v-4h-32z"/><path class="brass" d="M362 42h32v3h-32z"/>
+<path class="ink" d="M382 48h22v18h-22z"/><path class="brass" d="M380 46h26v3h-26zM402 52h4v10h-4z"/><circle class="win" cx="404" cy="57" r="3.5" opacity=".9"/>
+<path class="ink" d="M198 108h212v8H198z"/>
+<path class="ink" d="M366 104h40v18h-40z"/><path class="brass" d="M366 104h40v3h-40zM366 119h40v3h-40z"/>
+<circle class="ink" cx="252" cy="114" r="22"/>
+<circle class="red" cx="252" cy="114" r="18.8"/>
+<circle class="ink" cx="252" cy="114" r="17"/>
+<path class="spk" d="M252.0 114.0L269.8 114.0 M252.0 114.0L268.0 121.7 M252.0 114.0L263.1 127.9 M252.0 114.0L256.0 131.4 M252.0 114.0L248.0 131.4 M252.0 114.0L240.9 127.9 M252.0 114.0L236.0 121.7 M252.0 114.0L234.2 114.0 M252.0 114.0L236.0 106.3 M252.0 114.0L240.9 100.1 M252.0 114.0L248.0 96.6 M252.0 114.0L256.0 96.6 M252.0 114.0L263.1 100.1 M252.0 114.0L268.0 106.3"/>
+<circle class="red" cx="252" cy="114" r="4.8"/><circle class="ink" cx="252" cy="114" r="2.2"/>
+<circle class="ink" cx="312" cy="114" r="22"/>
+<circle class="red" cx="312" cy="114" r="18.8"/>
+<circle class="ink" cx="312" cy="114" r="17"/>
+<path class="spk" d="M312.0 114.0L329.8 114.0 M312.0 114.0L328.0 121.7 M312.0 114.0L323.1 127.9 M312.0 114.0L316.0 131.4 M312.0 114.0L308.0 131.4 M312.0 114.0L300.9 127.9 M312.0 114.0L296.0 121.7 M312.0 114.0L294.2 114.0 M312.0 114.0L296.0 106.3 M312.0 114.0L300.9 100.1 M312.0 114.0L308.0 96.6 M312.0 114.0L316.0 96.6 M312.0 114.0L323.1 100.1 M312.0 114.0L328.0 106.3"/>
+<circle class="red" cx="312" cy="114" r="4.8"/><circle class="ink" cx="312" cy="114" r="2.2"/>
+<circle class="ink" cx="378" cy="126" r="10"/>
+<circle class="red" cx="378" cy="126" r="6.8"/>
+<circle class="ink" cx="378" cy="126" r="5"/>
+<path class="spk" d="M378.0 126.0L383.8 126.0 M378.0 126.0L382.1 130.1 M378.0 126.0L378.0 131.8 M378.0 126.0L373.9 130.1 M378.0 126.0L372.2 126.0 M378.0 126.0L373.9 121.9 M378.0 126.0L378.0 120.2 M378.0 126.0L382.1 121.9"/>
+<circle class="red" cx="378" cy="126" r="2.5"/><circle class="ink" cx="378" cy="126" r="1.1"/>
+<circle class="ink" cx="404" cy="126" r="10"/>
+<circle class="red" cx="404" cy="126" r="6.8"/>
+<circle class="ink" cx="404" cy="126" r="5"/>
+<path class="spk" d="M404.0 126.0L409.8 126.0 M404.0 126.0L408.1 130.1 M404.0 126.0L404.0 131.8 M404.0 126.0L399.9 130.1 M404.0 126.0L398.2 126.0 M404.0 126.0L399.9 121.9 M404.0 126.0L404.0 120.2 M404.0 126.0L408.1 121.9"/>
+<circle class="red" cx="404" cy="126" r="2.5"/><circle class="ink" cx="404" cy="126" r="1.1"/>
+<path class="ln" stroke-width="4" stroke-linecap="round" d="M244 121h60"/>
+<path class="ln" stroke="var(--brass)" stroke-width="3.5" stroke-linecap="round" d="M372 113L305 121"/>
+<path class="red" d="M410 114h6l30 20h-36z"/>
+<path class="ln" stroke-width="2" d="M414 116v18M422 120v14M430 125v9M438 130v4"/>
+<path class="ink" d="M408 112h10v6h-10z"/>
+</svg>
 <h1>Ticket to Ride Scorer</h1>
+<div class="sub">Snap the board &middot; settle the score</div>
+</header>
 
-<!-- 1. Setup -->
-<section id="s-setup" class="card">
+<nav id="route" class="hide"><div><i></i>Players</div><div><i></i>Photo</div><div><i></i>Colors</div><div><i></i>Routes</div><div><i></i>Tickets</div><div><i></i>Scores</div></nav>
+
+<!-- 0. Main menu -->
+<section id="s-home" class="card">
+  <h2>All aboard</h2>
   <div id="resumeBox" class="hide">
     <p id="resumeMsg"></p>
     <button id="resumeBtn">Resume last game</button><button class="sec" id="discardBtn">Discard it</button>
   </div>
-  <h2>Game setup</h2>
+  <button id="homeNew">Start a new game</button>
+</section>
+<section id="s-help" class="card">
+  <h2>How it works</h2>
+  <ol>
+    <li><b>Players.</b> Pick the board (USA or Europe), then add each player's name and train color.</li>
+    <li><b>Photo.</b> At the end of the game, take one photo of the whole board from above, from any side of the table. Tap its 4 corners; drag any corner to fine-tune.</li>
+    <li><b>Colors.</b> Tap 2 trains of each player's color so the app learns your lighting.</li>
+    <li><b>Routes.</b> The app colors every claimed route. Tap a route to fix it. Enter the trains each player has left and it points out anything that doesn't add up.</li>
+    <li><b>Tickets.</b> Enter each player's destination tickets: completed ones add, missed ones subtract. Longest path is worked out from the board.</li>
+    <li><b>Scores.</b> Final totals, with the tie-breaker rule.</li>
+  </ol>
+  <h2>Photo tips</h2>
+  <ul class="mute">
+    <li>Hold the phone as flat over the board as you can, with the whole board and score track in frame.</li>
+    <li>Even light works best. Avoid lamp glare on the board and shadows across it.</li>
+    <li>Europe: routes are entered by length for now; the camera works on the USA board.</li>
+    <li>The game saves itself as you go. If the page reloads, use Resume.</li>
+  </ul>
+</section>
+
+<!-- 1. Setup -->
+<section id="s-setup" class="card hide">
+  <h2>Players</h2>
   <div class="row">Board:
     <select id="edition"><option value="usa">USA</option><option value="europe">Europe</option></select>
   </div>
   <div id="players"></div>
   <button class="sec" id="addPlayer">+ Add player</button>
   <p class="mute" id="editionNote"></p>
-  <button id="startBtn">Next</button>
+  <div class="nav"><button class="back" id="backHome">&lsaquo; Menu</button><button id="startBtn">Next</button></div>
 </section>
 
 <!-- 2. Photo + corners -->
@@ -55,22 +188,23 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
   <p class="mute">Stand at the end of the table so the whole board is in frame, including the score track around the edge.</p>
   <input type="file" id="photo" accept="image/*" capture="environment">
   <div id="cornerBox" class="hide">
-    <p id="cornerMsg" style="min-height:2.8em">Tap the 4 outer corners of the board.</p>
+    <p id="cornerMsg" style="min-height:3em">Tap the 4 outer corners of the board.</p>
     <p class="mute">Drag any corner to fine-tune it. A magnifier shows exactly where the point is.</p>
     <canvas id="photoCv"></canvas>
     <button class="sec" id="undoCorner">Undo corner</button>
-    <button id="warpBtn" disabled>Straighten</button>
   </div>
+  <div class="nav"><button class="back" id="backSetup">&lsaquo; Back</button><button id="warpBtn" disabled>Straighten</button></div>
 </section>
 
 <!-- 3. Calibrate -->
 <section id="s-cal" class="card hide">
   <h2>Show me each color</h2>
   <p class="mute">Tap 2 trains of each player's color on the board. Use trains that sit on a <b>different</b> painted color if you can.</p>
+  <p class="mute">The app turns the board the right way up on its own. If it still looks sideways or upside down, tap Turn board.</p>
   <div id="calStatus"></div>
   <canvas id="calCv"></canvas>
-  <button class="sec" id="redoPhoto">Retake photo</button>
-  <button id="detectBtn" disabled>Count trains</button>
+  <button class="sec" id="turnBtn">Turn board &#8635;</button><button class="sec" id="redoPhoto">Retake photo</button>
+  <div class="nav"><button class="back" id="backPhoto">&lsaquo; Back</button><button id="detectBtn" disabled>Count trains</button></div>
 </section>
 
 <!-- 4. Review -->
@@ -80,7 +214,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
   <div id="reviewSummary"></div>
   <div id="reviewFlags"></div>
   <canvas id="reviewCv"></canvas>
-  <button id="toTickets">Next: tickets</button>
+  <div class="nav"><button class="back" id="backCal">&lsaquo; Back</button><button id="toTickets">Next: tickets</button></div>
 </section>
 
 <!-- 4b. Manual routes (Europe until its board map is built) -->
@@ -88,7 +222,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
   <h2>Claimed routes</h2>
   <p class="mute">Enter how many routes of each length each player claimed.</p>
   <div id="manualRoutes"></div>
-  <button id="manualNext">Next: tickets</button>
+  <div class="nav"><button class="back" id="backSetup2">&lsaquo; Back</button><button id="manualNext">Next: tickets</button></div>
 </section>
 
 <!-- 5. Tickets + bonuses -->
@@ -96,15 +230,14 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
   <h2>Destination tickets and bonuses</h2>
   <p class="mute">For each ticket, enter its points and tap Completed or Not completed. Tap a ticket to remove it.</p>
   <div id="ticketCards"></div>
-  <button id="toResults">Final scores</button>
+  <div class="nav"><button class="back" id="backRoutes">&lsaquo; Back</button><button id="toResults">Final scores</button></div>
 </section>
 
 <!-- 6. Results -->
 <section id="s-results" class="card hide">
   <h2>Final scores</h2>
   <div id="results"></div>
-  <button class="sec" id="backTickets">Back</button>
-  <button id="newGame">New game</button>
+  <div class="nav"><button class="back" id="backTickets">&lsaquo; Back</button><button id="newGame">New game</button></div>
 </section>
 
 <script>
@@ -115,11 +248,22 @@ const EDITIONS={
 };
 let ed, players=[], tracks=[], empty=[], routes=null, owner=[], margin=[], runner=[], board=null, boardJpg=null, corners=[], photoImg=null, cal={}, manual={}, step='s-setup';
 const $=id=>document.getElementById(id);
-function show(id){document.querySelectorAll('section').forEach(s=>s.classList.add('hide'));$(id).classList.remove('hide');window.scrollTo(0,0);step=id;save()}
+const STOPS=['s-setup','s-photo','s-cal','s-review','s-tickets','s-results'];
+function show(id){document.querySelectorAll('section').forEach(s=>s.classList.add('hide'));$(id).classList.remove('hide');
+  if(id==='s-home')$('s-help').classList.remove('hide');
+  const n=STOPS.indexOf(id==='s-manual'?'s-review':id);$('route').classList.toggle('hide',n<0);
+  [...$('route').children].forEach((d,i)=>d.className=i<n?'done':i===n?'now':'');
+  window.scrollTo(0,0);step=id;save()}
+$('homeNew').onclick=()=>show('s-setup');
+$('backHome').onclick=()=>show('s-home');
+$('backSetup').onclick=$('backSetup2').onclick=()=>show('s-setup');
+$('backPhoto').onclick=()=>show('s-photo');
+$('backCal').onclick=()=>{drawCal();show('s-cal')};
+$('backRoutes').onclick=()=>{if(ed.camera){drawReview();show('s-review')}else show('s-manual')};
 
 /* ---------- Save game on the phone so a reload doesn't lose it ---------- */
 const KEY='ttr-game';
-function save(){if(step==='s-setup')return;try{localStorage.setItem(KEY,JSON.stringify({step,edition:ed===EDITIONS.usa?'usa':'europe',players,owner,margin,runner,manual,boardJpg,
+function save(){if(step==='s-setup'||step==='s-home')return;try{localStorage.setItem(KEY,JSON.stringify({step,edition:ed===EDITIONS.usa?'usa':'europe',players,owner,margin,runner,manual,boardJpg,
   cal:Object.fromEntries(Object.entries(cal).map(([c,l])=>[c,l.map(s=>({i:s.i,f:s.f}))]))}))}catch(e){}}
 let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(saved){$('resumeBox').classList.remove('hide');$('resumeMsg').textContent=`Unfinished game: ${saved.players.map(p=>p.name).join(', ')} (${EDITIONS[saved.edition].name}).`}
@@ -187,7 +331,7 @@ function drawCorners(active=-1){
     g.strokeStyle='#ff0';g.lineWidth=r/2;g.strokeRect(dx,dy,Z,Z);
     g.beginPath();g.moveTo(dx+Z/2,dy);g.lineTo(dx+Z/2,dy+Z);g.moveTo(dx,dy+Z/2);g.lineTo(dx+Z,dy+Z/2);g.stroke()}
   $('warpBtn').disabled=corners.length!==4;
-  $('cornerMsg').textContent=corners.length<4?`Tap the 4 outer corners of the board (${corners.length}/4).`:'Corners set. Drag any corner to adjust, then tap Straighten.';
+  $('cornerMsg').textContent=corners.length<4?`Tap the 4 outer corners of the board (${corners.length}/4).`:'Corners set. Drag to adjust, then Straighten.';
 }
 function canvasPt(cv,e){const b=cv.getBoundingClientRect();return[(e.clientX-b.left)*cv.width/b.width,(e.clientY-b.top)*cv.height/b.height]}
 let drag=-1;
@@ -216,17 +360,25 @@ function homography(src,dst){
 }
 function apply(h,x,y){const w=h[6]*x+h[7]*y+1;return[(h[0]*x+h[1]*y+h[2])/w,(h[3]*x+h[4]*y+h[5])/w]}
 
-$('warpBtn').onclick=()=>{
-  const W=ed.W,H=ed.H,src=orderCorners(corners);
+/* Which way the board faces: try all 4 quarter turns and keep the one where the empty
+   slots match the empty-board colors best. "Turn board" on the next screen is the backup. */
+let turn=0;
+function fitScore(){const d=slots().map((s,i)=>dist(slotFeature(s.box),empty[i])).sort((a,b)=>a-b),n=d.length*0.4|0;return d.slice(0,n).reduce((s,v)=>s+v,0)/n}
+$('warpBtn').onclick=()=>{$('warpBtn').textContent='Straightening…';setTimeout(()=>{
+  let best=1e9;for(let k=0;k<4;k++){warp(k);const s=fitScore();if(s<best){best=s;turn=k}}
+  warp(turn);$('warpBtn').textContent='Straighten';finishWarp()},30)};
+$('turnBtn').onclick=()=>{turn=(turn+1)%4;warp(turn);finishWarp()};
+function finishWarp(){boardJpg=board.toDataURL('image/jpeg',0.92);cal={};players.forEach(p=>cal[p.color]=[]);drawCal();show('s-cal')}
+function warp(k){
+  const W=ed.W,H=ed.H,o=orderCorners(corners),src=[0,1,2,3].map(i=>o[(i+k)%4]);
   const h=homography([[0,0],[W-1,0],[W-1,H-1],[0,H-1]],src); // board pixel -> photo pixel
   const sp=photoImg.getContext('2d').getImageData(0,0,photoImg.width,photoImg.height),sw=photoImg.width,sh=photoImg.height;
   board=document.createElement('canvas');board.width=W;board.height=H;const g=board.getContext('2d'),out=g.createImageData(W,H);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     let[u,v]=apply(h,x,y);u=Math.min(sw-1,Math.max(0,u|0));v=Math.min(sh-1,Math.max(0,v|0));
     const si=(v*sw+u)*4,di=(y*W+x)*4;out.data[di]=sp.data[si];out.data[di+1]=sp.data[si+1];out.data[di+2]=sp.data[si+2];out.data[di+3]=255}
-  g.putImageData(out,0,0);boardPx=out.data;boardJpg=board.toDataURL('image/jpeg',0.92);
-  cal={};players.forEach(p=>cal[p.color]=[]);drawCal();show('s-cal');
-};
+  g.putImageData(out,0,0);boardPx=out.data;
+}
 let boardPx;
 
 /* ---------- Color features (matches the tested method) ---------- */
