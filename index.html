@@ -16,8 +16,11 @@
 *{box-sizing:border-box}
 body{margin:0 auto;max-width:720px;background:var(--bg) var(--track);color:var(--ink);font:16px/1.45 -apple-system,system-ui,sans-serif;padding:12px 12px 80px}
 header{text-align:center;margin:0 0 10px}
-header svg{width:100%;max-width:420px;height:auto;display:block;margin:0 auto}
-h1{font:400 30px/1.1 Rye,Georgia,serif;margin:2px 0 0;color:var(--accent2);letter-spacing:.5px}
+#hero{width:100%;aspect-ratio:1168/784;object-fit:cover;display:block;border-radius:14px;
+  box-shadow:0 2px 0 var(--line),0 8px 22px rgba(40,25,10,.3);
+  -webkit-mask-image:linear-gradient(#000 85%,transparent);mask-image:linear-gradient(#000 85%,transparent)}
+h1{font:400 24px/1.1 Rye,Georgia,serif;margin:2px 0 4px;color:var(--accent2);letter-spacing:.5px}
+body.home #mast,body:not(.home) #hero{display:none}
 .sub{font:600 12px 'Roboto Slab',Georgia,serif;letter-spacing:3px;text-transform:uppercase;color:var(--mute);margin-top:4px}
 h2{font:700 19px 'Roboto Slab',Georgia,serif;margin:0 0 8px;color:var(--accent)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;
@@ -52,92 +55,10 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
 .flag{background:#fff3cd;color:#5c4400;border-radius:8px;padding:8px;margin:6px 0;font-size:14px}
 </style>
 </head>
-<body>
+<body class="home">
 <header>
-<svg viewBox="0 0 520 150" role="img" aria-label="1870s American steam locomotive">
-<style>.ink{fill:var(--loco)}.red{fill:var(--accent2)}.brass{fill:var(--brass)}.win{fill:var(--card)}.spk{stroke:var(--accent2);stroke-width:1.6;fill:none}
-.ln{stroke:var(--loco);fill:none}.rail{fill:var(--rail)}.cloud{fill:var(--mute);opacity:.18}
-.puff{fill:var(--mute);animation:drift 5s linear infinite;opacity:0}.p2{animation-delay:1.7s}.p3{animation-delay:3.4s}
-@keyframes drift{0%{transform:translate(0,0) scale(.4);opacity:.35}100%{transform:translate(-150px,-6px) scale(2.2);opacity:0}}
-@media (prefers-reduced-motion:reduce){.puff{animation:none}}</style>
-<path class="cloud" d="M372 18c-14-12-34-8-40 2-12-8-30-2-30 10-14-6-34 0-34 12-12-4-28 2-26 12h70c10 0 20-6 22-14 10 4 26 0 28-10 6-2 10-8 10-12z"/>
-<g transform="translate(378 14)"><circle class="puff" r="10"/><circle class="puff p2" r="10"/><circle class="puff p3" r="10"/></g>
-<path d="M0 141h520v9H0z" fill="var(--rail)" opacity=".25"/>
-<g class="rail"><rect x="2" y="136" width="14" height="6" rx="1"/><rect x="26" y="136" width="14" height="6" rx="1"/><rect x="50" y="136" width="14" height="6" rx="1"/><rect x="74" y="136" width="14" height="6" rx="1"/><rect x="98" y="136" width="14" height="6" rx="1"/><rect x="122" y="136" width="14" height="6" rx="1"/><rect x="146" y="136" width="14" height="6" rx="1"/><rect x="170" y="136" width="14" height="6" rx="1"/><rect x="194" y="136" width="14" height="6" rx="1"/><rect x="218" y="136" width="14" height="6" rx="1"/><rect x="242" y="136" width="14" height="6" rx="1"/><rect x="266" y="136" width="14" height="6" rx="1"/><rect x="290" y="136" width="14" height="6" rx="1"/><rect x="314" y="136" width="14" height="6" rx="1"/><rect x="338" y="136" width="14" height="6" rx="1"/><rect x="362" y="136" width="14" height="6" rx="1"/><rect x="386" y="136" width="14" height="6" rx="1"/><rect x="410" y="136" width="14" height="6" rx="1"/><rect x="434" y="136" width="14" height="6" rx="1"/><rect x="458" y="136" width="14" height="6" rx="1"/><rect x="482" y="136" width="14" height="6" rx="1"/><rect x="506" y="136" width="14" height="6" rx="1"/></g>
-<rect class="rail" x="0" y="131" width="520" height="5"/>
-<path class="ink" d="M22 78h104v40H22z"/>
-<path class="ink" d="M26 78c8-12 22-16 34-12 10-8 26-8 34 0 10-4 24-2 30 12z"/>
-<path class="brass" d="M22 76h104v4H22zM22 111h104v3H22z"/>
-<path class="red" d="M30 86h88v20H30z" opacity=".9"/><path class="ln" stroke-width="1.5" d="M34 90h80v12H34z"/>
-<path class="ink" d="M20 116h110v6H20z"/>
-<circle class="ink" cx="40" cy="124" r="8"/>
-<circle class="red" cx="40" cy="124" r="4.8"/>
-<circle class="ink" cx="40" cy="124" r="3"/>
-<path class="spk" d="M40.0 124.0L43.8 124.0 M40.0 124.0L41.9 127.3 M40.0 124.0L38.1 127.3 M40.0 124.0L36.2 124.0 M40.0 124.0L38.1 120.7 M40.0 124.0L41.9 120.7"/>
-<circle class="red" cx="40" cy="124" r="2.0"/><circle class="ink" cx="40" cy="124" r="0.9"/>
-<circle class="ink" cx="64" cy="124" r="8"/>
-<circle class="red" cx="64" cy="124" r="4.8"/>
-<circle class="ink" cx="64" cy="124" r="3"/>
-<path class="spk" d="M64.0 124.0L67.8 124.0 M64.0 124.0L65.9 127.3 M64.0 124.0L62.1 127.3 M64.0 124.0L60.2 124.0 M64.0 124.0L62.1 120.7 M64.0 124.0L65.9 120.7"/>
-<circle class="red" cx="64" cy="124" r="2.0"/><circle class="ink" cx="64" cy="124" r="0.9"/>
-<circle class="ink" cx="90" cy="124" r="8"/>
-<circle class="red" cx="90" cy="124" r="4.8"/>
-<circle class="ink" cx="90" cy="124" r="3"/>
-<path class="spk" d="M90.0 124.0L93.8 124.0 M90.0 124.0L91.9 127.3 M90.0 124.0L88.1 127.3 M90.0 124.0L86.2 124.0 M90.0 124.0L88.1 120.7 M90.0 124.0L91.9 120.7"/>
-<circle class="red" cx="90" cy="124" r="2.0"/><circle class="ink" cx="90" cy="124" r="0.9"/>
-<circle class="ink" cx="114" cy="124" r="8"/>
-<circle class="red" cx="114" cy="124" r="4.8"/>
-<circle class="ink" cx="114" cy="124" r="3"/>
-<path class="spk" d="M114.0 124.0L117.8 124.0 M114.0 124.0L115.9 127.3 M114.0 124.0L112.1 127.3 M114.0 124.0L110.2 124.0 M114.0 124.0L112.1 120.7 M114.0 124.0L115.9 120.7"/>
-<circle class="red" cx="114" cy="124" r="2.0"/><circle class="ink" cx="114" cy="124" r="0.9"/>
-<path class="ink" d="M128 116h10v4h-10z"/>
-<path class="ink" d="M136 50h62v72h-62z"/>
-<path class="ink" d="M128 46q35-12 78 0v5h-78z"/>
-<path class="brass" d="M128 50h78v2h-78z"/>
-<path class="win" d="M144 60h18v22h-18zM172 60h18v22h-18z"/>
-<path class="ln" stroke-width="1.4" d="M153 60v22M181 60v22"/>
-<path class="red" d="M140 90h54v24h-54z" opacity=".9"/><path class="ln" stroke-width="1.4" d="M144 94h46v16h-46z"/>
-<path class="ink" d="M198 70h170v38H198z"/>
-<path class="brass" d="M224 69h4v40h-4zM262 69h4v40h-4zM300 69h4v40h-4zM338 69h4v40h-4z"/>
-<path class="ink" d="M366 64h28q8 0 8 8v34q0 8-8 8h-28z"/>
-<path class="brass" d="M366 64h4v50h-4z"/>
-<path class="ink" d="M236 70v-8q12-10 24 0v8z"/><path class="brass" d="M234 70h28v3h-28z"/>
-<path class="brass" d="M282 62q0-12 7-12t7 12z"/><path class="ln" stroke-width="2" d="M289 50v-6M280 62h18"/>
-<path class="brass" d="M310 70v-12q13-14 26 0v12z"/><path class="ink" d="M312 58h22v3h-22z"/>
-<path class="brass" d="M206 50h4v20h-4z"/><circle class="brass" cx="208" cy="48" r="3"/>
-<path class="ink" d="M372 64l-2-20h16l-2 20z"/>
-<path class="ink" d="M360 44q18 6 36 0l-6-26h-24z"/><path class="ink" d="M362 18h32v-4h-32z"/><path class="brass" d="M362 42h32v3h-32z"/>
-<path class="ink" d="M382 48h22v18h-22z"/><path class="brass" d="M380 46h26v3h-26zM402 52h4v10h-4z"/><circle class="win" cx="404" cy="57" r="3.5" opacity=".9"/>
-<path class="ink" d="M198 108h212v8H198z"/>
-<path class="ink" d="M366 104h40v18h-40z"/><path class="brass" d="M366 104h40v3h-40zM366 119h40v3h-40z"/>
-<circle class="ink" cx="252" cy="114" r="22"/>
-<circle class="red" cx="252" cy="114" r="18.8"/>
-<circle class="ink" cx="252" cy="114" r="17"/>
-<path class="spk" d="M252.0 114.0L269.8 114.0 M252.0 114.0L268.0 121.7 M252.0 114.0L263.1 127.9 M252.0 114.0L256.0 131.4 M252.0 114.0L248.0 131.4 M252.0 114.0L240.9 127.9 M252.0 114.0L236.0 121.7 M252.0 114.0L234.2 114.0 M252.0 114.0L236.0 106.3 M252.0 114.0L240.9 100.1 M252.0 114.0L248.0 96.6 M252.0 114.0L256.0 96.6 M252.0 114.0L263.1 100.1 M252.0 114.0L268.0 106.3"/>
-<circle class="red" cx="252" cy="114" r="4.8"/><circle class="ink" cx="252" cy="114" r="2.2"/>
-<circle class="ink" cx="312" cy="114" r="22"/>
-<circle class="red" cx="312" cy="114" r="18.8"/>
-<circle class="ink" cx="312" cy="114" r="17"/>
-<path class="spk" d="M312.0 114.0L329.8 114.0 M312.0 114.0L328.0 121.7 M312.0 114.0L323.1 127.9 M312.0 114.0L316.0 131.4 M312.0 114.0L308.0 131.4 M312.0 114.0L300.9 127.9 M312.0 114.0L296.0 121.7 M312.0 114.0L294.2 114.0 M312.0 114.0L296.0 106.3 M312.0 114.0L300.9 100.1 M312.0 114.0L308.0 96.6 M312.0 114.0L316.0 96.6 M312.0 114.0L323.1 100.1 M312.0 114.0L328.0 106.3"/>
-<circle class="red" cx="312" cy="114" r="4.8"/><circle class="ink" cx="312" cy="114" r="2.2"/>
-<circle class="ink" cx="378" cy="126" r="10"/>
-<circle class="red" cx="378" cy="126" r="6.8"/>
-<circle class="ink" cx="378" cy="126" r="5"/>
-<path class="spk" d="M378.0 126.0L383.8 126.0 M378.0 126.0L382.1 130.1 M378.0 126.0L378.0 131.8 M378.0 126.0L373.9 130.1 M378.0 126.0L372.2 126.0 M378.0 126.0L373.9 121.9 M378.0 126.0L378.0 120.2 M378.0 126.0L382.1 121.9"/>
-<circle class="red" cx="378" cy="126" r="2.5"/><circle class="ink" cx="378" cy="126" r="1.1"/>
-<circle class="ink" cx="404" cy="126" r="10"/>
-<circle class="red" cx="404" cy="126" r="6.8"/>
-<circle class="ink" cx="404" cy="126" r="5"/>
-<path class="spk" d="M404.0 126.0L409.8 126.0 M404.0 126.0L408.1 130.1 M404.0 126.0L404.0 131.8 M404.0 126.0L399.9 130.1 M404.0 126.0L398.2 126.0 M404.0 126.0L399.9 121.9 M404.0 126.0L404.0 120.2 M404.0 126.0L408.1 121.9"/>
-<circle class="red" cx="404" cy="126" r="2.5"/><circle class="ink" cx="404" cy="126" r="1.1"/>
-<path class="ln" stroke-width="4" stroke-linecap="round" d="M244 121h60"/>
-<path class="ln" stroke="var(--brass)" stroke-width="3.5" stroke-linecap="round" d="M372 113L305 121"/>
-<path class="red" d="M410 114h6l30 20h-36z"/>
-<path class="ln" stroke-width="2" d="M414 116v18M422 120v14M430 125v9M438 130v4"/>
-<path class="ink" d="M408 112h10v6h-10z"/>
-</svg>
-<h1>Ticket to Ride Scorer</h1>
-<div class="sub">Snap the board &middot; settle the score</div>
+<img id="hero" src="hero.jpg" alt="Ticket to Ride Scorer: steam train at sunset">
+<div id="mast"><h1>Ticket to Ride Scorer</h1></div>
 </header>
 
 <nav id="route" class="hide"><div><i></i>Players</div><div><i></i>Photo</div><div><i></i>Colors</div><div><i></i>Routes</div><div><i></i>Tickets</div><div><i></i>Scores</div></nav>
@@ -251,6 +172,7 @@ const $=id=>document.getElementById(id);
 const STOPS=['s-setup','s-photo','s-cal','s-review','s-tickets','s-results'];
 function show(id){document.querySelectorAll('section').forEach(s=>s.classList.add('hide'));$(id).classList.remove('hide');
   if(id==='s-home')$('s-help').classList.remove('hide');
+  document.body.classList.toggle('home',id==='s-home');
   const n=STOPS.indexOf(id==='s-manual'?'s-review':id);$('route').classList.toggle('hide',n<0);
   [...$('route').children].forEach((d,i)=>d.className=i<n?'done':i===n?'now':'');
   window.scrollTo(0,0);step=id;save()}
