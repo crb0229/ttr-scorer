@@ -2,6 +2,13 @@
 
 Scores Ticket to Ride from a phone photo of the board. Runs entirely in the browser; photos never leave the phone.
 
+## Install on iPhone (works offline)
+1. On Wi-Fi, open https://crb0229.github.io/ttr-scorer/ in Safari.
+2. Tap Share, then Add to Home Screen.
+3. Open it once from the home screen while still online. It saves everything it needs (about 12 MB) on the phone.
+
+After that it runs with no internet, including the ticket reader. Updates download in the background whenever the phone is online and show up the next time the app opens.
+
 ## Flow
 The app opens on a main menu with New game, Resume, and a short how-it-works guide. Every step has a Back button.
 
@@ -20,11 +27,13 @@ The game is saved on the phone as you go. If the page reloads, tap "Resume last 
 
 ## Files
 - `index.html` — the whole app.
+- `sw.js` — saves the app's files on the phone so it works offline.
+- `manifest.json`, `icons/` — home screen name and icon.
 - `usa_tracks.json` — position of every train slot on the USA board (straightened board is 1500 x 990).
 - `usa_empty.json` — color of each slot on an empty board, used to tell empty from occupied.
 - `usa_tickets.json` — the 30 USA destination tickets (cities and points). Points written from memory; the four longest (LA–Chicago 16, LA–Miami 20, LA–New York 21, Seattle–New York 22) should be checked against the deck.
 - `usa_routes.json` — the two cities each route connects (same order as `usa_tracks.json`) and city positions. Checked against the full USA route list: all 100 routes, lengths and double routes match.
 
-Ticket reading uses Tesseract.js (open source, Apache 2.0), loaded from jsDelivr the first time it's used and run on the phone.
+Ticket reading uses Tesseract.js (Apache 2.0), stored in `ocr/` and run on the phone. Title fonts: Rye and Roboto Slab (SIL Open Font License), in `fonts/`.
 
 Not affiliated with Days of Wonder.
