@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TTR Scorer">
+<title>TTR Scorer</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--ink:#222;--mute:#777;--line:#ddd;--accent:#8a2b1c}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1a18;--card:#2a2825;--ink:#eee;--mute:#aaa;--line:#444;--accent:#e07a5f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,system-ui,sans-serif;padding:12px 12px 80px}
+h1{font-size:22px;margin:4px 0 12px}h2{font-size:18px;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;margin:4px 4px 4px 0}
+button.sec{background:var(--line);color:var(--ink)}
+button:disabled{opacity:.4}
+input,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.dot{width:18px;height:18px;border-radius:50%;display:inline-block;border:2px solid #fff;box-shadow:0 0 0 1px #888;flex:none}
+.mute{color:var(--mute);font-size:14px}
+canvas{width:100%;display:block;border-radius:8px;touch-action:manipulation}
+.hide{display:none}
+.chip{display:inline-block;padding:4px 10px;border-radius:999px;margin:3px;font-size:14px;cursor:pointer}
+.chip.ok{background:#d8efd8;color:#1d5c1d}.chip.bad{background:#f6d6d2;color:#7a1f14}
+table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}
+.warn{color:#c0392b;font-weight:600}
+</style>
+</head>
+<body>
+<h1>Ticket to Ride Scorer</h1>
+
+<!-- 1. Setup -->
+<section id="s-setup" class="card">
+  <h2>Game setup</h2>
+  <div class="row">Board:
+    <select id="edition"><option value="usa">USA</option><option value="europe">Europe</option></select>
+  </div>
+  <div id="players"></div>
+  <button class="sec" id="addPlayer">+ Add player</button>
+  <p class="mute" id="editionNote"></p>
+  <button id="startBtn">Next</button>
+</section>
+
+<!-- 2. Photo + corners -->
+<section id="s-photo" class="card hide">
+  <h2>Photo of the board</h2>
+  <p class="mute">Stand at the end of the table so the whole board is in frame, including the score track around the edge.</p>
+  <input type="file" id="photo" accept="image/*" capture="environment">
+  <div id="cornerBox" class="hide">
+    <p id="cornerMsg">Tap the 4 outer corners of the board.</p>
+    <canvas id="photoCv"></canvas>
+    <button class="sec" id="undoCorner">Undo corner</button>
+    <button id="warpBtn" disabled>Straighten</button>
+  </div>
+</section>
+
+<!-- 3. Calibrate -->
+<section id="s-cal" class="card hide">
+  <h2>Show me each color</h2>
+  <p class="mute">Tap 2 trains of each player's color on the board. Use trains that sit on a <b>different</b> painted color if you can.</p>
+  <div id="calStatus"></div>
+  <canvas id="calCv"></canvas>
+  <button class="sec" id="redoPhoto">Retake photo</button>
+  <button id="detectBtn" disabled>Count trains</button>
+</section>
+
+<!-- 4. Review -->
+<section id="s-review" class="card hide">
+  <h2>Check the routes</h2>
+  <p class="mute">Tap any route to change who owns it. Compare "trains left" with the trains each player actually has in front of them.</p>
+  <div id="reviewSummary"></div>
+  <canvas id="reviewCv"></canvas>
+  <button id="toTickets">Next: tickets</button>
+</section>
+
+<!-- 4b. Manual routes (Europe until its board map is built) -->
+<section id="s-manual" class="card hide">
+  <h2>Claimed routes</h2>
+  <p class="mute">Enter how many routes of each length each player claimed.</p>
+  <div id="manualRoutes"></div>
+  <button id="manualNext">Next: tickets</button>
+</section>
+
+<!-- 5. Tickets + bonuses -->
+<section id="s-tickets" class="card hide">
+  <h2>Destination tickets and bonuses</h2>
+  <p class="mute">For each ticket, enter its points and tap Completed or Not completed. Tap a ticket to remove it.</p>
+  <div id="ticketCards"></div>
+  <button id="toResults">Final scores</button>
+</section>
+
+<!-- 6. Results -->
+<section id="s-results" class="card hide">
+  <h2>Final scores</h2>
+  <div id="results"></div>
+  <button class="sec" id="backTickets">Back</button>
+  <button id="newGame">New game</button>
+</section>
+
+<script>
+const COLORS={red:'#d32f2f',green:'#2e7d32',blue:'#1565c0',black:'#212121',yellow:'#f9c80e'};
+const EDITIONS={
+  usa:{name:'USA',points:{1:1,2:2,3:4,4:7,5:10,6:15},lengths:[1,2,3,4,5,6],trains:45,W:1500,H:990,camera:true},
+  europe:{name:'Europe',points:{1:1,2:2,3:4,4:7,6:15,8:21},lengths:[1,2,3,4,6,8],trains:45,camera:false}
+};
+let ed, players=[], tracks=[], empty=[], owner=[], board=null, corners=[], photoImg=null, cal={}, manual={};
+const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll('section').forEach(s=>s.classList.add('hide'));$(id).classList.remove('hide');window.scrollTo(0,0)}
+
+/* ---------- Setup ---------- */
+function playerRow(name,color){
+  const d=document.createElement('div');d.className='row';
+  d.innerHTML=`<input placeholder="Name" value="${name}" style="flex:1;min-width:120px">
+   <select>${Object.keys(COLORS).map(c=>`<option ${c===color?'selected':''}>${c}</option>`).join('')}</select>
+   <button class="sec">✕</button>`;
+  d.querySelector('button').onclick=()=>d.remove();
+  $('players').appendChild(d);
+}
+['red','blue'].forEach((c,i)=>playerRow('Player '+(i+1),c));
+$('addPlayer').onclick=()=>{const used=[...$('players').querySelectorAll('select')].map(s=>s.value);
+  if(used.length>=5)return;playerRow('',Object.keys(COLORS).find(c=>!used.includes(c)))};
+function noteEdition(){$('editionNote').textContent=$('edition').value==='europe'
+  ?'Europe: camera counting is not set up yet for this board. You will enter routes by length for now.':'USA: routes are counted from a photo.'}
+$('edition').onchange=noteEdition;noteEdition();
+$('startBtn').onclick=async()=>{
+  players=[...$('players').children].map(r=>({name:r.querySelector('input').value.trim()||r.querySelector('select').value,
+    color:r.querySelector('select').value,tickets:[],bonus:{}}));
+  if(players.length<2)return alert('Add at least 2 players.');
+  if(new Set(players.map(p=>p.color)).size!==players.length)return alert('Each player needs a different color.');
+  ed=EDITIONS[$('edition').value];
+  if(ed.camera){
+    if(!tracks.length){tracks=await (await fetch('usa_tracks.json')).json();empty=await (await fetch('usa_empty.json')).json()}
+    show('s-photo');
+  } else {buildManual();show('s-manual')}
+};
+
+/* ---------- Photo and corners ---------- */
+$('photo').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const img=new Image();img.onload=()=>{
+    const s=Math.min(1,2400/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);photoImg=c;corners=[];drawCorners();$('cornerBox').classList.remove('hide')};
+  img.src=URL.createObjectURL(f);
+};
+function drawCorners(){
+  const cv=$('photoCv');cv.width=photoImg.width;cv.height=photoImg.height;const g=cv.getContext('2d');g.drawImage(photoImg,0,0);
+  const r=photoImg.width/120;g.lineWidth=r/2;
+  corners.forEach(p=>{g.strokeStyle='#ff0';g.beginPath();g.arc(p[0],p[1],r,0,7);g.stroke();
+    g.beginPath();g.moveTo(p[0]-r*2,p[1]);g.lineTo(p[0]+r*2,p[1]);g.moveTo(p[0],p[1]-r*2);g.lineTo(p[0],p[1]+r*2);g.stroke()});
+  $('warpBtn').disabled=corners.length!==4;
+  $('cornerMsg').textContent=corners.length<4?`Tap the 4 outer corners of the board (${corners.length}/4).`:'Corners set. Tap Straighten.';
+}
+function canvasPt(cv,e){const b=cv.getBoundingClientRect();return[(e.clientX-b.left)*cv.width/b.width,(e.clientY-b.top)*cv.height/b.height]}
+$('photoCv').onclick=e=>{if(corners.length<4){corners.push(canvasPt($('photoCv'),e));drawCorners()}};
+$('undoCorner').onclick=()=>{corners.pop();drawCorners()};
+
+/* Order taps as top-left, top-right, bottom-right, bottom-left */
+function orderCorners(p){
+  const s=[...p].sort((a,b)=>a[0]-b[0]);const L=s.slice(0,2).sort((a,b)=>a[1]-b[1]),R=s.slice(2).sort((a,b)=>a[1]-b[1]);
+  return[L[0],R[0],R[1],L[1]];
+}
+/* 4-point perspective transform: maps src points to dst points */
+function homography(src,dst){
+  const A=[],b=[];
+  for(let i=0;i<4;i++){const[x,y]=src[i],[u,v]=dst[i];
+    A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}
+  for(let c=0;c<8;c++){let m=c;for(let r=c+1;r<8;r++)if(Math.abs(A[r][c])>Math.abs(A[m][c]))m=r;
+    [A[c],A[m]]=[A[m],A[c]];[b[c],b[m]]=[b[m],b[c]];
+    for(let r=0;r<8;r++)if(r!==c){const f=A[r][c]/A[c][c];for(let k=c;k<8;k++)A[r][k]-=f*A[c][k];b[r]-=f*b[c]}}
+  const h=b.map((v,i)=>v/A[i][i]);h.push(1);return h;
+}
+function apply(h,x,y){const w=h[6]*x+h[7]*y+1;return[(h[0]*x+h[1]*y+h[2])/w,(h[3]*x+h[4]*y+h[5])/w]}
+
+$('warpBtn').onclick=()=>{
+  const W=ed.W,H=ed.H,src=orderCorners(corners);
+  const h=homography([[0,0],[W-1,0],[W-1,H-1],[0,H-1]],src); // board pixel -> photo pixel
+  const sp=photoImg.getContext('2d').getImageData(0,0,photoImg.width,photoImg.height),sw=photoImg.width,sh=photoImg.height;
+  board=document.createElement('canvas');board.width=W;board.height=H;const g=board.getContext('2d'),out=g.createImageData(W,H);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    let[u,v]=apply(h,x,y);u=Math.min(sw-1,Math.max(0,u|0));v=Math.min(sh-1,Math.max(0,v|0));
+    const si=(v*sw+u)*4,di=(y*W+x)*4;out.data[di]=sp.data[si];out.data[di+1]=sp.data[si+1];out.data[di+2]=sp.data[si+2];out.data[di+3]=255}
+  g.putImageData(out,0,0);boardPx=out.data;
+  cal={};players.forEach(p=>cal[p.color]=[]);drawCal();show('s-cal');
+};
+let boardPx;
+
+/* ---------- Color features (matches the tested method) ---------- */
+function toLab(r,g,b){
+  const f=c=>{c/=255;return c>0.04045?((c+0.055)/1.055)**2.4:c/12.92};r=f(r);g=f(g);b=f(b);
+  let X=(0.4124*r+0.3576*g+0.1805*b)/0.9505,Y=0.2126*r+0.7152*g+0.0722*b,Z=(0.0193*r+0.1192*g+0.9505*b)/1.089;
+  const t=v=>v>0.008856?Math.cbrt(v):7.787*v+16/116;X=t(X);Y=t(Y);Z=t(Z);
+  return[116*Y-16,500*(X-Y),200*(Y-Z)];
+}
+function px(x,y){const W=ed.W;x=Math.min(W-2,Math.max(0,x));y=Math.min(ed.H-2,Math.max(0,y));
+  const x0=x|0,y0=y|0,fx=x-x0,fy=y-y0,o=[0,0,0];
+  for(const[dx,dy,w]of[[0,0,(1-fx)*(1-fy)],[1,0,fx*(1-fy)],[0,1,(1-fx)*fy],[1,1,fx*fy]]){const i=((y0+dy)*W+x0+dx)*4;o[0]+=boardPx[i]*w;o[1]+=boardPx[i+1]*w;o[2]+=boardPx[i+2]*w}
+  return o}
+/* Slot box -> 40x40 grid, keep middle 20x20, median and spread of color */
+function slotFeature(box){
+  const h=homography([[0,0],[39,0],[39,39],[0,39]],box),L=[[],[],[]];
+  for(let j=10;j<30;j++)for(let i=10;i<30;i++){const[x,y]=apply(h,i,j);const lab=toLab(...px(x,y));for(let k=0;k<3;k++)L[k].push(lab[k])}
+  const med=L.map(a=>{a.sort((p,q)=>p-q);return(a[199]+a[200])/2});
+  const sd=L.map(a=>{const m=a.reduce((s,v)=>s+v,0)/a.length;return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length)});
+  return[...med,...sd];
+}
+function dist(f,v){let a=0,b=0;for(let k=0;k<3;k++)a+=(f[k]-v[k])**2;for(let k=3;k<6;k++)b+=(f[k]-v[k])**2;return Math.sqrt(a)+0.5*Math.sqrt(b)}
+const slots=()=>tracks.flatMap((t,ti)=>t.map(b=>({ti,box:b})));
+function center(b){return[b.reduce((s,p)=>s+p[0],0)/4,b.reduce((s,p)=>s+p[1],0)/4]}
+
+/* ---------- Calibrate ---------- */
+function drawBoardOn(cv){cv.width=ed.W;cv.height=ed.H;const g=cv.getContext('2d');g.drawImage(board,0,0);return g}
+function drawCal(){
+  const g=drawBoardOn($('calCv'));
+  slots().forEach(s=>{g.strokeStyle='rgba(255,0,255,.5)';g.lineWidth=1;poly(g,s.box);g.stroke()});
+  for(const c in cal)cal[c].forEach(s=>{g.strokeStyle=COLORS[c];g.lineWidth=6;poly(g,s.box);g.stroke();g.strokeStyle='#fff';g.lineWidth=2;g.stroke()});
+  $('calStatus').innerHTML=players.map(p=>`<div class="row"><span class="dot" style="background:${COLORS[p.color]}"></span>${p.name}: ${cal[p.color].length}/2
+     <button class="sec ${calColor===p.color?'':'sec'}" style="${calColor===p.color?'background:var(--accent);color:#fff':''}" onclick="calColor='${p.color}';drawCal()">Tap ${p.color}</button></div>`).join('');
+  $('detectBtn').disabled=players.some(p=>cal[p.color].length<1);
+}
+let calColor=null;
+function poly(g,b){g.beginPath();b.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath()}
+function nearestSlot(pt){let best=null,bd=1e9;slots().forEach((s,i)=>{const c=center(s.box),d=(c[0]-pt[0])**2+(c[1]-pt[1])**2;if(d<bd){bd=d;best={...s,i}}});return bd<40*40?best:null}
+$('calCv').onclick=e=>{
+  if(!calColor){calColor=players.find(p=>cal[p.color].length<2)?.color||players[0].color}
+  const s=nearestSlot(canvasPt($('calCv'),e));if(!s)return;
+  const list=cal[calColor];list.push({box:s.box,f:slotFeature(s.box)});if(list.length>2)list.shift();
+  if(list.length>=2){const nxt=players.find(p=>cal[p.color].length<2);if(nxt)calColor=nxt.color}
+  drawCal();
+};
+$('redoPhoto').onclick=()=>{corners=[];$('photo').value='';$('cornerBox').classList.add('hide');show('s-photo')};
+
+/* ---------- Detect ---------- */
+$('detectBtn').onclick=()=>{
+  const ref={};for(const c in cal){const fs=cal[c].map(s=>s.f);ref[c]=fs[0].map((_,k)=>fs.reduce((s,f)=>s+f[k],0)/fs.length)}
+  const all=slots(),feats=all.map(s=>slotFeature(s.box));
+  // Lighting correction for the empty-board reference: median offset over slots that look empty
+  const offs=[];feats.forEach((f,i)=>{const de=dist(f,empty[i]);if(Object.values(ref).every(r=>de<dist(f,r)))offs.push(f.slice(0,3).map((v,k)=>v-empty[i][k]))});
+  const off=[0,1,2].map(k=>{const a=offs.map(o=>o[k]).sort((p,q)=>p-q);return a.length?a[a.length>>1]:0}).concat([0,0,0]);
+  owner=tracks.map(()=>null);
+  const byTrack={};all.forEach((s,i)=>(byTrack[s.ti]??=[]).push(i));
+  for(const ti in byTrack){
+    const sc={none:byTrack[ti].reduce((s,i)=>s+dist(feats[i],empty[i].map((v,k)=>v+off[k])),0)};
+    for(const c in ref)sc[c]=byTrack[ti].reduce((s,i)=>s+dist(feats[i],ref[c]),0);
+    const best=Object.keys(sc).reduce((a,b)=>sc[a]<=sc[b]?a:b);owner[ti]=best==='none'?null:best;
+  }
+  drawReview();show('s-review');
+};
+
+/* ---------- Review ---------- */
+function routePoints(color){let pts=0,trains=0,n=0;tracks.forEach((t,i)=>{if(owner[i]===color){pts+=ed.points[t.length];trains+=t.length;n++}});return{pts,trains,n}}
+function drawReview(){
+  const g=drawBoardOn($('reviewCv'));
+  tracks.forEach((t,i)=>{const c=owner[i];t.forEach(b=>{poly(g,b);
+    if(c){g.fillStyle=COLORS[c]+'99';g.fill();g.strokeStyle='#fff';g.lineWidth=3;g.stroke()}
+    else{g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=1;g.stroke()}})});
+  $('reviewSummary').innerHTML='<table><tr><th>Player</th><th>Routes</th><th>Points</th><th>Trains left</th></tr>'+
+    players.map(p=>{const r=routePoints(p.color),left=ed.trains-r.trains;
+      return`<tr><td><span class="dot" style="background:${COLORS[p.color]}"></span> ${p.name}</td><td>${r.n}</td><td>${r.pts}</td><td class="${left<0?'warn':''}">${left}</td></tr>`}).join('')+'</table>';
+}
+$('reviewCv').onclick=e=>{
+  const pt=canvasPt($('reviewCv'),e),g=$('reviewCv').getContext('2d');
+  const ti=tracks.findIndex(t=>t.some(b=>{poly(g,b);return g.isPointInPath(pt[0]*1,pt[1]*1)}));
+  // isPointInPath uses canvas pixel space; our canvas is board-sized so coordinates match
+  if(ti<0)return;const cycle=[null,...players.map(p=>p.color)];owner[ti]=cycle[(cycle.indexOf(owner[ti])+1)%cycle.length];drawReview();
+};
+$('toTickets').onclick=()=>{buildTickets();show('s-tickets')};
+
+/* ---------- Manual routes (Europe) ---------- */
+function buildManual(){
+  $('manualRoutes').innerHTML=players.map((p,pi)=>`<div class="card"><div class="row"><span class="dot" style="background:${COLORS[p.color]}"></span><b>${p.name}</b></div>
+    ${ed.lengths.map(l=>`<div class="row">Length ${l} (${ed.points[l]} pts each): <input type="number" min="0" inputmode="numeric" style="width:70px" data-p="${pi}" data-l="${l}" value="0"></div>`).join('')}</div>`).join('');
+}
+$('manualNext').onclick=()=>{manual={};$('manualRoutes').querySelectorAll('input').forEach(i=>{(manual[i.dataset.p]??={})[i.dataset.l]=+i.value||0});buildTickets();show('s-tickets')};
+function routeScore(pi){
+  if(ed.camera){const r=routePoints(players[pi].color);return r}
+  let pts=0,trains=0,n=0;for(const l in manual[pi]){const k=manual[pi][l];pts+=k*ed.points[l];trains+=k*l;n+=k}return{pts,trains,n};
+}
+
+/* ---------- Tickets and bonuses ---------- */
+function buildTickets(){
+  $('ticketCards').innerHTML=players.map((p,pi)=>`<div class="card"><div class="row"><span class="dot" style="background:${COLORS[p.color]}"></span><b>${p.name}</b></div>
+    <div class="row"><input type="number" inputmode="numeric" placeholder="Ticket pts" style="width:110px" id="tp${pi}">
+      <button onclick="addTicket(${pi},true)">Completed</button><button class="sec" onclick="addTicket(${pi},false)">Not completed</button></div>
+    <div id="tl${pi}"></div>
+    ${ed===EDITIONS.usa
+      ?`<div class="row"><label><input type="checkbox" onchange="players[${pi}].bonus.longest=this.checked" ${p.bonus.longest?'checked':''}> Longest continuous path (+10)</label></div>`
+      :`<div class="row"><label><input type="checkbox" onchange="players[${pi}].bonus.express=this.checked" ${p.bonus.express?'checked':''}> European Express (+10)</label></div>
+        <div class="row">Stations not used: <select onchange="players[${pi}].bonus.stations=+this.value">${[0,1,2,3].map(n=>`<option ${p.bonus.stations===n?'selected':''}>${n}</option>`).join('')}</select> (4 pts each)</div>`}
+  </div>`).join('');
+  players.forEach((_,pi)=>drawTickets(pi));
+}
+function addTicket(pi,ok){const i=$('tp'+pi),v=parseInt(i.value);if(!(v>0))return;players[pi].tickets.push({v,ok});i.value='';drawTickets(pi);i.focus()}
+function drawTickets(pi){const t=players[pi].tickets,ok=t.filter(x=>x.ok),bad=t.filter(x=>!x.ok);
+  $('tl'+pi).innerHTML=t.map((x,i)=>`<span class="chip ${x.ok?'ok':'bad'}" onclick="players[${pi}].tickets.splice(${i},1);drawTickets(${pi})">${x.ok?'+':'−'}${x.v}</span>`).join('')+
+   `<div class="mute">${ok.length} completed (+${ok.reduce((s,x)=>s+x.v,0)}), ${bad.length} not completed (−${bad.reduce((s,x)=>s+x.v,0)})</div>`}
+
+/* ---------- Results ---------- */
+$('toResults').onclick=()=>{
+  const rows=players.map((p,pi)=>{const r=routeScore(pi),tp=p.tickets.filter(x=>x.ok).reduce((s,x)=>s+x.v,0),tm=p.tickets.filter(x=>!x.ok).reduce((s,x)=>s+x.v,0);
+    const bonus=(p.bonus.longest?10:0)+(p.bonus.express?10:0)+4*(p.bonus.stations||0);
+    return{p,r,tp,tm,nOk:p.tickets.filter(x=>x.ok).length,nBad:p.tickets.filter(x=>!x.ok).length,bonus,total:r.pts+tp-tm+bonus}}).sort((a,b)=>b.total-a.total);
+  $('results').innerHTML='<table><tr><th>Player</th><th>Routes</th><th>Tickets</th><th>Bonus</th><th>Total</th></tr>'+rows.map(x=>
+    `<tr><td><span class="dot" style="background:${COLORS[x.p.color]}"></span> ${x.p.name}</td><td>${x.r.pts}</td>
+     <td>+${x.tp} / −${x.tm}<div class="mute">${x.nOk} done, ${x.nBad} missed</div></td><td>${x.bonus}</td><td><b>${x.total}</b></td></tr>`).join('')+'</table>'+
+    `<p class="mute">Tie: most completed tickets wins${ed.camera?', then the Longest Path holder':', then fewest stations used, then the European Express holder'}.</p>`;
+  show('s-results');
+};
+$('backTickets').onclick=()=>show('s-tickets');
+$('newGame').onclick=()=>location.reload();
+</script>
+</body>
+</html>
