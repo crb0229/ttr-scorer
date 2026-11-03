@@ -116,7 +116,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
 <section id="s-setup" class="card hide">
   <h2>Players</h2>
   <div class="row">Board:
-    <select id="edition"><option value="usa">USA</option><option value="europe">Europe</option></select>
+    <select id="edition"><option value="usa">USA</option><option value="usa1910">USA 1910</option><option value="europe">Europe</option></select>
   </div>
   <div id="players"></div>
   <button class="sec" id="addPlayer">+ Add player</button>
@@ -185,7 +185,9 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
 <script>
 const COLORS={red:'#d32f2f',green:'#2e7d32',blue:'#1565c0',black:'#212121',yellow:'#f9c80e'};
 const EDITIONS={
-  usa:{name:'USA',points:{1:1,2:2,3:4,4:7,5:10,6:15},lengths:[1,2,3,4,5,6],trains:45,W:1500,H:990,camera:true},
+  usa:{name:'USA',points:{1:1,2:2,3:4,4:7,5:10,6:15},lengths:[1,2,3,4,5,6],trains:45,W:1500,H:990,camera:true,tickets:'usa_tickets.json'},
+  // 1910 rules: same board, the 1910 ticket deck, Globetrotter (+15, most completed tickets) instead of Longest Path
+  usa1910:{name:'USA 1910',points:{1:1,2:2,3:4,4:7,5:10,6:15},lengths:[1,2,3,4,5,6],trains:45,W:1500,H:990,camera:true,tickets:'usa1910_tickets.json',globetrotter:true},
   europe:{name:'Europe',points:{1:1,2:2,3:4,4:7,6:15,8:21},lengths:[1,2,3,4,6,8],trains:45,camera:false}
 };
 let ed, players=[], tracks=[], empty=[], routes=null, owner=[], margin=[], runner=[], board=null, boardJpg=null, corners=[], photoImg=null, cal={}, manual={}, step='s-setup';
@@ -206,7 +208,7 @@ $('backRoutes').onclick=()=>{if(ed.camera){drawReview();show('s-review')}else sh
 
 /* ---------- Save game on the phone so a reload doesn't lose it ---------- */
 const KEY='ttr-game';
-function save(){if(step==='s-setup'||step==='s-home')return;try{localStorage.setItem(KEY,JSON.stringify({step,edition:ed===EDITIONS.usa?'usa':'europe',players,owner,margin,runner,manual,boardJpg,
+function save(){if(step==='s-setup'||step==='s-home')return;try{localStorage.setItem(KEY,JSON.stringify({step,edition:Object.keys(EDITIONS).find(k=>EDITIONS[k]===ed),players,owner,margin,runner,manual,boardJpg,
   cal:Object.fromEntries(Object.entries(cal).map(([c,l])=>[c,l.map(s=>({i:s.i,f:s.f}))]))}))}catch(e){}}
 let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(saved){$('resumeBox').classList.remove('hide');$('resumeMsg').textContent=`Unfinished game: ${saved.players.map(p=>p.name).join(', ')} (${EDITIONS[saved.edition].name}).`}
@@ -220,8 +222,8 @@ $('resumeBtn').onclick=async()=>{
   if(st==='s-tickets'||st==='s-results')buildTickets();
   if(st==='s-results')showResults();else show(st);
 };
-async function loadData(){if(!tracks.length){tracks=await (await fetch('usa_tracks.json')).json();empty=await (await fetch('usa_empty.json')).json();routes=await (await fetch('usa_routes.json')).json();
-  TIX=(await (await fetch('usa_tickets.json')).json()).map(([a,b,v],id)=>({id,a,b,v}))}}
+async function loadData(){if(!tracks.length){tracks=await (await fetch('usa_tracks.json')).json();empty=await (await fetch('usa_empty.json')).json();routes=await (await fetch('usa_routes.json')).json()}
+  TIX=(await (await fetch(ed.tickets)).json()).map(([a,b,v],id)=>({id,a,b,v}))}
 let TIX=[];
 function loadBoard(url){return new Promise(r=>{const im=new Image();im.onload=()=>{board=document.createElement('canvas');board.width=ed.W;board.height=ed.H;
   const g=board.getContext('2d');g.drawImage(im,0,0);boardPx=g.getImageData(0,0,ed.W,ed.H).data;r()};im.src=url})}
@@ -239,7 +241,9 @@ function playerRow(name,color){
 $('addPlayer').onclick=()=>{const used=[...$('players').querySelectorAll('select')].map(s=>s.value);
   if(used.length>=5)return;playerRow('',Object.keys(COLORS).find(c=>!used.includes(c)))};
 function noteEdition(){$('editionNote').textContent=$('edition').value==='europe'
-  ?'Europe: camera counting is not set up yet for this board. You will enter routes by length for now.':'USA: routes are counted from a photo.'}
+  ?'Europe: camera counting is not set up yet for this board. You will enter routes by length for now.'
+  :$('edition').value==='usa1910'?'USA 1910: routes are counted from a photo. Uses the 1910 ticket deck, and the Globetrotter bonus (+15, most completed tickets) replaces Longest Path.'
+  :'USA: routes are counted from a photo.'}
 $('edition').onchange=noteEdition;noteEdition();
 $('startBtn').onclick=async()=>{
   players=[...$('players').children].map(r=>({name:r.querySelector('input').value.trim()||r.querySelector('select').value,
@@ -480,7 +484,9 @@ function buildTickets(){
       :`<div class="row"><input type="number" inputmode="numeric" placeholder="Ticket pts" style="width:110px" id="tp${pi}">
         <button onclick="addTicket(${pi},true)">Completed</button><button class="sec" onclick="addTicket(${pi},false)">Not completed</button></div>`}
     <div id="tl${pi}"></div><canvas id="tcv${pi}" class="hide" style="margin-top:6px"></canvas>
-    ${ed===EDITIONS.usa
+    ${ed.globetrotter
+      ?`<div class="mute">Globetrotter (+15) goes to the most completed tickets. The app works it out on the scores screen.</div>`
+      :ed.camera
       ?`<div class="row"><label><input type="checkbox" onchange="players[${pi}].bonus.longest=this.checked;players[${pi}].bonus.lpManual=true;save()" ${p.bonus.longest?'checked':''}> Longest continuous path (+10)</label>
         <span class="mute">${p.lp} trains, worked out from the board</span></div>`
       :`<div class="row"><label><input type="checkbox" onchange="players[${pi}].bonus.express=this.checked;save()" ${p.bonus.express?'checked':''}> European Express (+10)</label></div>
@@ -552,17 +558,70 @@ function imgCanvas(f){return new Promise(r=>{const im=new Image();im.onload=()=>
   c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);r(c)};im.src=URL.createObjectURL(f)})}
 function turned(c,k){if(!k)return c;const o=document.createElement('canvas'),g=o.getContext('2d');[o.width,o.height]=k%2?[c.height,c.width]:[c.width,c.height];
   g.translate(o.width/2,o.height/2);g.rotate(k*Math.PI/2);g.drawImage(c,-c.width/2,-c.height/2);return o}
+/* Find the cards: bright rectangles on a darker table. Returns card boxes in photo pixels. */
+function findCards(im){
+  const S=300/Math.max(im.width,im.height),w=Math.round(im.width*S),h=Math.round(im.height*S),N=w*h;
+  const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.drawImage(im,0,0,w,h);
+  const d=g.getImageData(0,0,w,h).data,L=new Uint8Array(N),hist=new Array(256).fill(0);
+  for(let i=0;i<N;i++){L[i]=(d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11)|0;hist[L[i]]++}
+  let sum=0,sB=0,wB=0,best=0,th=128;for(let i=0;i<256;i++)sum+=i*hist[i];
+  for(let t=0;t<256;t++){wB+=hist[t];if(!wB)continue;const wF=N-wB;if(!wF)break;sB+=t*hist[t];const v=wB*wF*(sB/wB-(sum-sB)/wF)**2;if(v>best){best=v;th=t}}
+  const seen=new Uint8Array(N),boxes=[];
+  for(let s=0;s<N;s++){if(L[s]<=th||seen[s])continue;const st=[s];seen[s]=1;let x0=w,y0=h,x1=0,y1=0,n=0;
+    while(st.length){const q=st.pop(),x=q%w,y=(q/w)|0;n++;x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);
+      if(x>0&&!seen[q-1]&&L[q-1]>th){seen[q-1]=1;st.push(q-1)}if(x<w-1&&!seen[q+1]&&L[q+1]>th){seen[q+1]=1;st.push(q+1)}
+      if(y>0&&!seen[q-w]&&L[q-w]>th){seen[q-w]=1;st.push(q-w)}if(y<h-1&&!seen[q+w]&&L[q+w]>th){seen[q+w]=1;st.push(q+w)}}
+    const bw=x1-x0+1,bh=y1-y0+1,a=Math.max(bw,bh)/Math.min(bw,bh);
+    if(bw*bh>N*0.01&&bw*bh<N*0.5&&a>1.2&&a<2&&n>bw*bh*0.3)boxes.push({x:x0/S,y:y0/S,w:bw/S,h:bh/S})}
+  return boxes;
+}
+/* The name banner across the top of a card, turned upright (k quarter turns), enlarged, optionally grayed
+   (darkest channel, which keeps the blue and red lettering dark and fades the gold trim) */
+function banner(im,b,k,[y0,y1,x0,x1,gray]){
+  const s=Math.min(3,1000/Math.max(b.w,b.h)),c=document.createElement('canvas');c.width=Math.round(b.w*s);c.height=Math.round(b.h*s);
+  c.getContext('2d').drawImage(im,b.x,b.y,b.w,b.h,0,0,c.width,c.height);
+  const u=turned(c,k),o=document.createElement('canvas');o.width=Math.round(u.width*(x1-x0));o.height=Math.round(u.height*(y1-y0));
+  const g=o.getContext('2d');g.drawImage(u,u.width*x0,u.height*y0,o.width,o.height,0,0,o.width,o.height);
+  if(gray){const d=g.getImageData(0,0,o.width,o.height);for(let i=0;i<d.data.length;i+=4)d.data[i]=d.data[i+1]=d.data[i+2]=Math.min(d.data[i],d.data[i+1],d.data[i+2]);g.putImageData(d,0,0)}
+  return o;
+}
+/* Ways to read a banner, best first: [crop top, bottom, left, right, gray], reader layout, capitals only */
+const READS=[[[.03,.23,.06,.94,1],'11',0],[[.03,.23,.06,.94,0],'6',1],[[.09,.215,.12,.88,1],'7',1]];
+async function readBanner(w,im,b,k,r){const[crop,psm,caps]=READS[r];
+  await w.setParameters({tessedit_pageseg_mode:psm,tessedit_char_whitelist:caps?'ABCDEFGHIJKLMNOPQRSTUVWXYZ. ':''});
+  return matchBanner((await w.recognize(banner(im,b,k,crop))).data.text)}
+/* Match a banner's text against every known ticket; a few dropped letters don't matter */
+const letters=s=>s.toUpperCase().normalize('NFD').replace(/[^A-Z]/g,'');
+function subDist(p,t){let prev=new Array(t.length+1).fill(0);
+  for(let i=1;i<=p.length;i++){const cur=[i];for(let j=1;j<=t.length;j++)cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(p[i-1]!==t[j-1]));prev=cur}
+  return Math.min(...prev)}
+function matchBanner(text){const t=letters(text);if(t.length<5)return null;let best=null,bd=9,second=9;
+  for(const k of TIX){const p=letters(k.a+k.b),d=Math.min(subDist(p,t),subDist(letters(k.b+k.a),t))/p.length;
+    if(d<bd){second=bd;bd=d;best=k}else if(d<second)second=d}
+  return bd<=0.4&&second-bd>=0.1?best.id:null}
+function imgEl(f){return new Promise((r,j)=>{const im=new Image();im.onload=()=>r(im);im.onerror=j;im.src=URL.createObjectURL(f)})}
 async function readTickets(pi,f){
   if(!f)return;const msg=$('tmsg'+pi);msg.textContent='Reading tickets…';
   try{
-    const img=await imgCanvas(f),w=await ocr();let ids=[];
-    for(const k of[0,2,1,3]){msg.textContent='Reading tickets…';const c=turned(img,k),words=[];
-      // read twice: page layout, then scattered text (catches cards the first pass skips)
-      for(const m of['3','11']){await w.setParameters({tessedit_pageseg_mode:m});words.push(...(await w.recognize(c)).data.words)}
-      ids=pairTickets(words);if(ids.length)break}
+    const im=await imgEl(f),w=await ocr(),cards=findCards(im);let ids=[],unread=0;
+    if(cards.length){
+      // read each card's name banner: upright, then upside down (or sideways for a tall card), trying each way of reading
+      let flip=0; // once a card reads upside down, try that first on the rest
+      for(const[i,b]of cards.entries()){msg.textContent=`Reading tickets… card ${i+1} of ${cards.length}`;let id=null;
+        const ks=b.w>=b.h?[0,2]:[1,3];if(flip)ks.reverse();
+        for(let r=0;r<READS.length&&id===null;r++)for(const k of ks){id=await readBanner(w,im,b,k,r);if(id!==null){flip=k!==(b.w>=b.h?0:1);break}}
+        if(id===null)unread++;else if(!ids.includes(id))ids.push(id)}
+      await w.setParameters({tessedit_char_whitelist:''});
+    }
+    if(!ids.length){ // no separate cards found: read the whole photo instead
+      const img=await imgCanvas(f);
+      for(const k of[0,2,1,3]){msg.textContent='Reading tickets…';const c=turned(img,k),words=[];
+        for(const m of['3','11']){await w.setParameters({tessedit_pageseg_mode:m});words.push(...(await w.recognize(c)).data.words)}
+        ids=pairTickets(words);if(ids.length)break}
+      unread=0}
     ids.forEach(id=>{if(!players[pi].tickets.some(x=>x.id===id))players[pi].tickets.push({id})});
-    msg.textContent=ids.length?`Found ${ids.length} ticket${ids.length>1?'s':''}. Check them below and add any it missed from the list.`
-      :'No tickets recognized. Try again with the cards upright, not overlapping, and filling the photo, or add them from the list.';
+    msg.textContent=!ids.length?'No tickets recognized. Try again with the cards upright, not overlapping, and filling the photo, or add them from the list.'
+      :`Found ${ids.length} ticket${ids.length>1?'s':''}.`+(unread?` ${unread} card${unread>1?'s':''} couldn't be read: add ${unread>1?'them':'it'} from the list.`:' Check them below.');
     drawTickets(pi);
   }catch(e){msg.textContent="Couldn't start the ticket reader. Add tickets from the list, or reopen the app and try again."}
 }
@@ -570,13 +629,16 @@ async function readTickets(pi,f){
 /* ---------- Results ---------- */
 $('toResults').onclick=showResults;
 function showResults(){
+  const most=Math.max(...players.map(p=>p.tickets.filter(x=>x.ok).length));
   const rows=players.map((p,pi)=>{const r=routeScore(pi),tp=p.tickets.filter(x=>x.ok).reduce((s,x)=>s+x.v,0),tm=p.tickets.filter(x=>!x.ok).reduce((s,x)=>s+x.v,0);
-    const bonus=ed.camera?(p.bonus.longest?10:0):(p.bonus.express?10:0)+4*p.bonus.stations;
+    // Globetrotter: every player tied for most completed tickets gets it (same as Longest Path ties)
+    const bonus=ed.globetrotter?(most>0&&p.tickets.filter(x=>x.ok).length===most?15:0):ed.camera?(p.bonus.longest?10:0):(p.bonus.express?10:0)+4*p.bonus.stations;
     return{p,r,tp,tm,nOk:p.tickets.filter(x=>x.ok).length,nBad:p.tickets.filter(x=>!x.ok).length,bonus,total:r.pts+tp-tm+bonus}}).sort((a,b)=>b.total-a.total);
   $('results').innerHTML='<table><tr><th>Player</th><th>Routes</th><th>Tickets</th><th>Bonus</th><th>Total</th></tr>'+rows.map(x=>
     `<tr><td><span class="dot" style="background:${COLORS[x.p.color]}"></span> ${x.p.name}</td><td>${x.r.pts}</td>
      <td>+${x.tp} / −${x.tm}<div class="mute">${x.nOk} done, ${x.nBad} missed</div></td><td>${x.bonus}</td><td><b>${x.total}</b></td></tr>`).join('')+'</table>'+
-    `<p class="mute">Tie: most completed tickets wins${ed.camera?', then the Longest Path holder':', then fewest stations used, then the European Express holder'}.</p>`;
+    (ed.globetrotter?`<p class="mute">Bonus is the Globetrotter (+15) for most completed tickets; tied players all get it.</p>`:'')+
+    `<p class="mute">Tie: most completed tickets wins${ed.globetrotter?'':ed.camera?', then the Longest Path holder':', then fewest stations used, then the European Express holder'}.</p>`;
   show('s-results');
 }
 $('backTickets').onclick=()=>show('s-tickets');

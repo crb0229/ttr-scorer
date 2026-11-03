@@ -2,7 +2,7 @@
 // App files refresh in the background whenever the phone is online, so updates
 // arrive on the next launch. Change VERSION only if a file is removed or renamed.
 const VERSION='ttr-v1';
-const FILES=['./','index.html','manifest.json','hero.jpg','usa_tracks.json','usa_empty.json','usa_routes.json','usa_tickets.json',
+const FILES=['./','index.html','manifest.json','hero.jpg','usa_tracks.json','usa_empty.json','usa_routes.json','usa_tickets.json','usa1910_tickets.json',
   'icons/icon-180.png','icons/icon-192.png','icons/icon-512.png',
   'fonts/rye-latin-400-normal.woff2','fonts/roboto-slab-latin-600-normal.woff2','fonts/roboto-slab-latin-700-normal.woff2',
   'ocr/tesseract.min.js','ocr/worker.min.js','ocr/tesseract-core-simd-lstm.wasm.js','ocr/tesseract-core-lstm.wasm.js','ocr/eng.traineddata.gz'];
