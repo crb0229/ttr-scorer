@@ -40,6 +40,10 @@ button{font:600 16px/1.2 -apple-system,system-ui,sans-serif;border:0;border-radi
   box-shadow:inset 0 -3px 0 rgba(0,0,0,.22);cursor:pointer}
 button.sec{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
 button.back{background:transparent;color:var(--mute);box-shadow:none;padding-left:4px}
+label.btn{position:relative;display:inline-block;font:600 16px/1.2 -apple-system,system-ui,sans-serif;border-radius:10px;padding:11px 16px;background:var(--accent);color:#fff;
+  margin:4px 4px 4px 0;box-shadow:inset 0 -3px 0 rgba(0,0,0,.22);cursor:pointer}
+.trow{display:flex;align-items:center;gap:6px;border-left:5px solid;border-radius:8px;padding:6px 8px;margin:6px 0;cursor:pointer}
+.trow.ok{border-color:#2e7d32;background:rgba(46,125,50,.1)}.trow.bad{border-color:#c0392b;background:rgba(192,57,43,.1)}
 button:disabled{opacity:.4}
 .nav{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 /* progress shown as stations on a rail line */
@@ -159,7 +163,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
 <!-- 5. Tickets + bonuses -->
 <section id="s-tickets" class="card hide">
   <h2>Destination tickets and bonuses</h2>
-  <p class="mute">For each ticket, enter its points and tap Completed or Not completed. Tap a ticket to remove it.</p>
+  <p class="mute" id="ticketHelp">For each ticket, enter its points and tap Completed or Not completed. Tap a ticket to remove it.</p>
   <div id="ticketCards"></div>
   <div class="nav"><button class="back" id="backRoutes">&lsaquo; Back</button><button id="toResults">Final scores</button></div>
 </section>
@@ -209,7 +213,9 @@ $('resumeBtn').onclick=async()=>{
   if(st==='s-tickets'||st==='s-results')buildTickets();
   if(st==='s-results')showResults();else show(st);
 };
-async function loadData(){if(!tracks.length){tracks=await (await fetch('usa_tracks.json')).json();empty=await (await fetch('usa_empty.json')).json();routes=await (await fetch('usa_routes.json')).json()}}
+async function loadData(){if(!tracks.length){tracks=await (await fetch('usa_tracks.json')).json();empty=await (await fetch('usa_empty.json')).json();routes=await (await fetch('usa_routes.json')).json();
+  TIX=(await (await fetch('usa_tickets.json')).json()).map(([a,b,v],id)=>({id,a,b,v}))}}
+let TIX=[];
 function loadBoard(url){return new Promise(r=>{const im=new Image();im.onload=()=>{board=document.createElement('canvas');board.width=ed.W;board.height=ed.H;
   const g=board.getContext('2d');g.drawImage(im,0,0);boardPx=g.getImageData(0,0,ed.W,ed.H).data;r()};im.src=url})}
 
@@ -447,10 +453,19 @@ function longestPath(color){
 function buildTickets(){
   if(ed.camera){const lp=players.map(p=>longestPath(p.color)),mx=Math.max(...lp);
     players.forEach((p,i)=>{p.lp=lp[i];if(!p.bonus.lpManual)p.bonus.longest=mx>0&&lp[i]===mx})}
+  $('ticketHelp').textContent=ed.camera
+    ?"Photograph each player's tickets laid face-up, or add them from the list. The app checks each ticket against the board: completed ones add, missed ones subtract. Tap a ticket to see its route."
+    :'For each ticket, enter its points and tap Completed or Not completed. Tap a ticket to remove it.';
+  const opts=[...TIX].sort((x,y)=>x.a.localeCompare(y.a)||x.b.localeCompare(y.b)).map(t=>`<option value="${t.id}">${t.a} – ${t.b} (${t.v})</option>`).join('');
   $('ticketCards').innerHTML=players.map((p,pi)=>`<div class="card"><div class="row"><span class="dot" style="background:${COLORS[p.color]}"></span><b>${p.name}</b></div>
-    <div class="row"><input type="number" inputmode="numeric" placeholder="Ticket pts" style="width:110px" id="tp${pi}">
-      <button onclick="addTicket(${pi},true)">Completed</button><button class="sec" onclick="addTicket(${pi},false)">Not completed</button></div>
-    <div id="tl${pi}"></div>
+    ${ed.camera
+      ?`<div class="row"><label class="btn">Photo of tickets<input type="file" accept="image/*" capture="environment" style="position:absolute;opacity:0;width:1px;height:1px"
+          onchange="readTickets(${pi},this.files[0]);this.value=''"></label>
+        <select style="flex:1;min-width:150px" onchange="if(this.value)addTix(${pi},+this.value);this.value=''"><option value="">Add from list…</option>${opts}</select></div>
+        <div class="mute" id="tmsg${pi}"></div>`
+      :`<div class="row"><input type="number" inputmode="numeric" placeholder="Ticket pts" style="width:110px" id="tp${pi}">
+        <button onclick="addTicket(${pi},true)">Completed</button><button class="sec" onclick="addTicket(${pi},false)">Not completed</button></div>`}
+    <div id="tl${pi}"></div><canvas id="tcv${pi}" class="hide" style="margin-top:6px"></canvas>
     ${ed===EDITIONS.usa
       ?`<div class="row"><label><input type="checkbox" onchange="players[${pi}].bonus.longest=this.checked;players[${pi}].bonus.lpManual=true;save()" ${p.bonus.longest?'checked':''}> Longest continuous path (+10)</label>
         <span class="mute">${p.lp} trains, worked out from the board</span></div>`
@@ -460,9 +475,82 @@ function buildTickets(){
   players.forEach((_,pi)=>drawTickets(pi));
 }
 function addTicket(pi,ok){const i=$('tp'+pi),v=parseInt(i.value);if(!(v>0))return;players[pi].tickets.push({v,ok});i.value='';drawTickets(pi);i.focus()}
-function drawTickets(pi){const t=players[pi].tickets,ok=t.filter(x=>x.ok),bad=t.filter(x=>!x.ok);
-  $('tl'+pi).innerHTML=t.map((x,i)=>`<span class="chip ${x.ok?'ok':'bad'}" onclick="players[${pi}].tickets.splice(${i},1);drawTickets(${pi})">${x.ok?'+':'−'}${x.v}</span>`).join('')+
+function drawTickets(pi){const t=players[pi].tickets;if(ed.camera)tixState(pi);const ok=t.filter(x=>x.ok),bad=t.filter(x=>!x.ok);
+  $('tl'+pi).innerHTML=(ed.camera?t.map((x,i)=>{const k=TIX[x.id],m=x.miss.length;
+      return`<div class="trow ${x.ok?'ok':'bad'}"><span onclick="showTicket(${pi},${i})" style="flex:1"><b>${k.a} – ${k.b}</b> ${x.ok?'+':'−'}${k.v}
+        <div class="mute">${x.ok?'Completed':m<=2?`Missed. ${m} route${m>1?'s':''} short: ${x.miss.map(rname).join(', ')}`:'Missed: not connected'}</div></span>
+        <button class="back" onclick="players[${pi}].tickets.splice(${i},1);$('tcv${pi}').classList.add('hide');drawTickets(${pi})" aria-label="Remove">&#10005;</button></div>`}).join('')
+    :t.map((x,i)=>`<span class="chip ${x.ok?'ok':'bad'}" onclick="players[${pi}].tickets.splice(${i},1);drawTickets(${pi})">${x.ok?'+':'−'}${x.v}</span>`).join(''))+
    `<div class="mute">${ok.length} completed (+${ok.reduce((s,x)=>s+x.v,0)}), ${bad.length} not completed (−${bad.reduce((s,x)=>s+x.v,0)})</div>`;save()}
+
+/* ---------- Ticket check from the board (USA) ---------- */
+/* Cheapest way to join a and b: own routes cost 0, open routes their length, other players' routes length+100.
+   The routes on that path not owned by the player are what's missing (empty = ticket completed). */
+function ticketPath(color,a,b){
+  const d={[a]:0},prev={},done=new Set();
+  for(;;){let u=null;for(const c in d)if(!done.has(c)&&(u===null||d[c]<d[u]))u=c;if(u===null||u===b)break;done.add(u);
+    routes.routes.forEach((r,i)=>{if(r[0]!==u&&r[1]!==u)return;const v=r[0]===u?r[1]:r[0];
+      const w=owner[i]===color?0:owner[i]?tracks[i].length+100:tracks[i].length;if(d[u]+w<(d[v]??1e9)){d[v]=d[u]+w;prev[v]=i}})}
+  const path=[];for(let c=b;c!==a;){const i=prev[c];path.push(i);c=routes.routes[i][0]===c?routes.routes[i][1]:routes.routes[i][0]}
+  return{path,missing:path.filter(i=>owner[i]!==color)};
+}
+function tixState(pi){const p=players[pi];p.tickets.forEach(x=>{const k=TIX[x.id],r=ticketPath(p.color,k.a,k.b);x.v=k.v;x.ok=!r.missing.length;x.miss=r.missing;x.path=r.path})}
+function addTix(pi,id){const t=players[pi].tickets;if(!t.some(x=>x.id===id))t.push({id});drawTickets(pi)}
+function showTicket(pi,i){
+  const p=players[pi],x=p.tickets[i],k=TIX[x.id],cv=$('tcv'+pi),g=drawBoardOn(cv);cv.classList.remove('hide');
+  g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,0,ed.W,ed.H);
+  tracks.forEach((t,j)=>{if(owner[j]===p.color)t.forEach(b=>{poly(g,b);g.fillStyle=COLORS[p.color]+'88';g.fill()})});
+  x.path.forEach(j=>tracks[j].forEach(b=>{poly(g,b);if(owner[j]===p.color){g.fillStyle=COLORS[p.color];g.fill();g.strokeStyle='#fff';g.lineWidth=4;g.stroke()}
+    else{g.setLineDash([10,6]);g.strokeStyle='#ffeb3b';g.lineWidth=6;g.stroke();g.setLineDash([])}}));
+  [k.a,k.b].forEach(c=>{const[cx,cy]=routes.cities[c];g.beginPath();g.arc(cx,cy,16,0,7);g.fillStyle='#fff';g.fill();g.lineWidth=5;g.strokeStyle=COLORS[p.color];g.stroke();
+    g.font='bold 30px sans-serif';g.lineWidth=6;g.strokeStyle='#000';g.strokeText(c,cx+22,cy-14);g.fillStyle='#fff';g.fillText(c,cx+22,cy-14)});
+  cv.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ---------- Reading tickets from a photo (USA) ---------- */
+/* Text reader (Tesseract, open source) runs on the phone; downloaded the first time it's used. */
+let ocrW=null;
+async function ocr(){if(!ocrW){await new Promise((r,j)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  s.onload=r;s.onerror=j;document.head.appendChild(s)});ocrW=await Tesseract.createWorker('eng')}return ocrW}
+/* One distinctive word per city (two for cities whose first word is short or shared) */
+const CITYWORD={vancouver:'Vancouver',seattle:'Seattle',portland:'Portland',calgary:'Calgary',helena:'Helena',winnipeg:'Winnipeg',duluth:'Duluth',omaha:'Omaha',
+  denver:'Denver',phoenix:'Phoenix',dallas:'Dallas',houston:'Houston',chicago:'Chicago',toronto:'Toronto',montreal:'Montreal',boston:'Boston',pittsburgh:'Pittsburgh',
+  washington:'Washington',raleigh:'Raleigh',charleston:'Charleston',atlanta:'Atlanta',nashville:'Nashville',miami:'Miami',vegas:'Las Vegas',york:'New York',
+  salt:'Salt Lake City',lake:'Salt Lake City',sault:'Sault St. Marie',marie:'Sault St. Marie',angeles:'Los Angeles',francisco:'San Francisco',santa:'Santa Fe',
+  louis:'Saint Louis',kansas:'Kansas City',oklahoma:'Oklahoma City',little:'Little Rock',rock:'Little Rock',orleans:'New Orleans',paso:'El Paso'};
+function lev(a,b){let p=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){const c=[i];for(let j=1;j<=b.length;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]!==b[j-1]));p=c}return p[b.length]}
+function cityOf(w){const s=w.toLowerCase().replace(/[^a-z]/g,'');if(s.length<4)return null;let best=null,bd=9;
+  for(const k in CITYWORD){const d=lev(s,k),lim=k.length<5?0:k.length<8?1:2;if(d<=lim&&d<bd){bd=d;best=CITYWORD[k]}}return best}
+/* Words -> city sightings -> pair the closest two cities that make a real ticket, each sighting used once */
+function pairTickets(words){
+  // the reader sometimes splits a name ("An" "geles"): also try each word joined to the next one on the same line
+  const all=[...words];words.forEach((w,i)=>{const n=words[i+1];if(!n)return;const a=w.bbox,b=n.bbox,h=a.y1-a.y0;
+    if(Math.abs(a.y0-b.y0)<h&&b.x0-a.x1<h&&b.x0>a.x0)all.push({text:w.text+n.text,bbox:{x0:a.x0,y0:Math.min(a.y0,b.y0),x1:b.x1,y1:Math.max(a.y1,b.y1)}})});
+  const occ=[];all.forEach(w=>{const c=cityOf(w.text);if(!c)return;const b=w.bbox,o={c,x:(b.x0+b.x1)/2,y:(b.y0+b.y1)/2,h:b.y1-b.y0};
+    if(!occ.some(q=>q.c===c&&Math.hypot(q.x-o.x,q.y-o.y)<4*Math.max(q.h,o.h)))occ.push(o)});
+  const cand=[];occ.forEach((p,i)=>occ.forEach((q,j)=>{if(j<=i||p.c===q.c)return;const t=TIX.find(t=>(t.a===p.c&&t.b===q.c)||(t.a===q.c&&t.b===p.c));
+    const d=Math.hypot(p.x-q.x,p.y-q.y)/((p.h+q.h)/2);if(t&&d<30)cand.push({i,j,d,id:t.id})}));
+  const used=new Set(),ids=[];cand.sort((a,b)=>a.d-b.d).forEach(c=>{if(used.has(c.i)||used.has(c.j)||ids.includes(c.id))return;used.add(c.i);used.add(c.j);ids.push(c.id)});
+  return ids;
+}
+function imgCanvas(f){return new Promise(r=>{const im=new Image();im.onload=()=>{const s=Math.min(1,2000/Math.max(im.width,im.height)),c=document.createElement('canvas');
+  c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);r(c)};im.src=URL.createObjectURL(f)})}
+function turned(c,k){if(!k)return c;const o=document.createElement('canvas'),g=o.getContext('2d');[o.width,o.height]=k%2?[c.height,c.width]:[c.width,c.height];
+  g.translate(o.width/2,o.height/2);g.rotate(k*Math.PI/2);g.drawImage(c,-c.width/2,-c.height/2);return o}
+async function readTickets(pi,f){
+  if(!f)return;const msg=$('tmsg'+pi);msg.textContent='Reading tickets… The first time, the reader downloads (about 10 MB).';
+  try{
+    const img=await imgCanvas(f),w=await ocr();let ids=[];
+    for(const k of[0,2,1,3]){msg.textContent='Reading tickets…';const c=turned(img,k),words=[];
+      // read twice: page layout, then scattered text (catches cards the first pass skips)
+      for(const m of['3','11']){await w.setParameters({tessedit_pageseg_mode:m});words.push(...(await w.recognize(c)).data.words)}
+      ids=pairTickets(words);if(ids.length)break}
+    ids.forEach(id=>{if(!players[pi].tickets.some(x=>x.id===id))players[pi].tickets.push({id})});
+    msg.textContent=ids.length?`Found ${ids.length} ticket${ids.length>1?'s':''}. Check them below and add any it missed from the list.`
+      :'No tickets recognized. Try again with the cards upright, not overlapping, and filling the photo, or add them from the list.';
+    drawTickets(pi);
+  }catch(e){msg.textContent="Couldn't load the ticket reader. Check the internet connection, or add tickets from the list."}
+}
 
 /* ---------- Results ---------- */
 $('toResults').onclick=showResults;
